@@ -6,146 +6,214 @@
 <title>FENCING ELITE</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#080e1b;color:white;font-family:Arial,sans-serif;text-align:center}
-button{border:1px solid #6ca9ff;background:#172b4b;color:white;padding:13px 22px;border-radius:10px;font-size:17px;font-weight:bold;margin:6px;cursor:pointer;touch-action:manipulation}
-button:active{background:#2865a9}
-h1{font-size:clamp(30px,7vw,56px);letter-spacing:3px;color:#fff;text-shadow:0 0 20px #238bff}
-h2{color:#9ecbff}
-.panel{max-width:950px;margin:20px auto;padding:16px}
+body{margin:0;background:#08101f;color:#fff;font-family:Arial,sans-serif;text-align:center}
+button,select{font-size:16px;padding:12px 16px;margin:5px;border-radius:9px;border:1px solid #659bdf;background:#162c4b;color:#fff}
+button:active{background:#3376c7}
+h1{font-size:clamp(30px,7vw,55px);letter-spacing:3px;text-shadow:0 0 18px #168bff}
+h2{color:#9fcaff}
+.panel{max-width:1000px;margin:auto;padding:15px}
 .hidden{display:none!important}
-#arena{height:340px;max-width:950px;margin:auto;position:relative;overflow:hidden;background:linear-gradient(#182b49 0%,#101a30 60%,#273c58 60%,#273c58 100%);border:2px solid #526d91;border-radius:14px}
-#arena:before{content:"FENCING ELITE";position:absolute;top:18px;left:0;right:0;color:#536a8b;font-size:clamp(18px,4vw,32px);font-weight:bold;letter-spacing:5px}
-.piste{position:absolute;left:0;right:0;bottom:35px;height:65px;background:linear-gradient(90deg,#d8e1e9,#f8fafc,#d8e1e9);border-top:3px solid #fff;border-bottom:3px solid #7e8b9c}
-.line{position:absolute;left:50%;height:100%;border-left:2px solid #8192a6}
-.fencer{position:absolute;bottom:91px;width:95px;height:175px;transition:left .12s;z-index:2}
-.body{position:absolute;left:28px;top:49px;width:40px;height:73px;background:#f5f6f7;border:2px solid #a9b6c5;border-radius:12px 12px 5px 5px}
-.mask{position:absolute;top:10px;left:22px;width:52px;height:42px;border-radius:15px;background:repeating-linear-gradient(0deg,#d3dce5 0px,#d3dce5 3px,#63758b 4px,#63758b 5px);border:3px solid #f8fafc}
-.leg{position:absolute;top:115px;width:16px;height:55px;background:#eef2f5;border:2px solid #9eacbb;border-radius:5px}
-.leg.one{left:27px;transform:rotate(12deg)}
-.leg.two{left:52px;transform:rotate(-10deg)}
-.arm{position:absolute;top:55px;left:57px;width:46px;height:13px;background:#f4f5f6;border:2px solid #9eacbb;border-radius:8px;transform-origin:left center;transform:rotate(-12deg)}
-.sword{position:absolute;left:88px;top:47px;width:90px;height:3px;background:#dcecff;box-shadow:0 0 4px #fff;transform-origin:left center}
-.guard .body{background:#c8ddff}
-.attack .arm{transform:rotate(-2deg)}
-.attack .sword{width:135px}
-#p1{left:calc(24% - 45px)}
-#p2{left:calc(76% - 45px);transform:scaleX(-1)}
-#hud{display:flex;justify-content:space-around;align-items:center;gap:8px;margin:14px auto;max-width:950px}
-.score{font-size:clamp(30px,7vw,48px);font-weight:bold}
-.clock{font-size:25px;color:#b9d9ff}
-#status{color:#b9d9ff;min-height:25px}
-.controls{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;max-width:950px;margin:12px auto}
-.controls button{min-width:65px}
-small{color:#a9b9d0}
-input,select{font-size:17px;padding:10px;border-radius:8px;margin:5px;max-width:90%}
-@media(max-width:600px){#arena{height:300px}.fencer{transform-origin:bottom center;scale:.8}#p2{transform:scaleX(-1) scale(.8)}.piste{bottom:25px;height:55px}.fencer{bottom:75px}}
+#arena{width:100%;height:min(55vh,480px);min-height:300px;background:linear-gradient(#132744,#263d59);border:2px solid #46668d;border-radius:12px;overflow:hidden;position:relative}
+#three{position:absolute;inset:0;width:100%;height:100%}
+#hud{display:flex;justify-content:space-around;align-items:center}
+.score{font-size:42px;font-weight:bold}
+#clock{font-size:25px;color:#b6d9ff}
+#status{min-height:26px;color:#b6d9ff}
+.controls{display:flex;flex-wrap:wrap;justify-content:center;gap:3px}
+small{color:#b1c2dc}
 </style>
 </head>
 <body>
 <section id="home" class="panel">
 <h1>FENCING ELITE</h1>
 <p>ÉPÉE · THE ULTIMATE DUEL</p>
-<h2>フェンシング・エペ</h2>
+<h2>3D FENCING SIMULATOR</h2>
+<p>3分間・15点先取</p>
+<label>CPU難易度
+<select id="difficulty">
+<option value="1">BEGINNER</option>
+<option value="2">INTERMEDIATE</option>
+<option value="3">ADVANCED</option>
+<option value="4">EXPERT</option>
+</select>
+</label><br>
 <button onclick="startGame()">START</button>
 <button onclick="showRecords()">RECORDS</button>
-<h2>設定</h2>
-<label>CPUの強さ
-<select id="difficulty"><option value="1">BEGINNER</option><option value="2">INTERMEDIATE</option><option value="3">ADVANCED</option><option value="4">EXPERT</option></select>
-</label>
-<p><small>15点先取、または3分間の試合。全身が有効面。</small></p>
 <div id="records" class="hidden"></div>
 </section>
 <section id="game" class="panel hidden">
-<div id="hud"><div><small>PLAYER</small><div id="s1" class="score">0</div></div><div><div class="clock" id="clock">03:00</div><div id="status">EN GARDE!</div></div><div><small>CPU</small><div id="s2" class="score">0</div></div></div>
-<div id="arena">
-<div class="piste"><div class="line"></div></div>
-<div id="p1" class="fencer"><div class="mask"></div><div class="body"></div><div class="leg one"></div><div class="leg two"></div><div class="arm"></div><div class="sword"></div></div>
-<div id="p2" class="fencer"><div class="mask"></div><div class="body"></div><div class="leg one"></div><div class="leg two"></div><div class="arm"></div><div class="sword"></div></div>
+<div id="hud">
+<div><small>PLAYER</small><div id="s1" class="score">0</div></div>
+<div><div id="clock">03:00</div><div id="status">EN GARDE!</div></div>
+<div><small>CPU</small><div id="s2" class="score">0</div></div>
 </div>
+<div id="arena"><div id="three"></div></div>
 <div class="controls">
-<button onclick="move(-1)">◀ 後退</button><button onclick="move(1)">前進 ▶</button>
-<button onclick="attack()">⚔ 攻撃</button><button onclick="toggleGuard()">🛡 防御</button>
+<button onclick="move(-1)">◀ 後退</button>
+<button onclick="move(1)">前進 ▶</button>
+<button onclick="attack()">⚔ 攻撃</button>
+<button onclick="toggleGuard()">🛡 防御</button>
 <button onclick="backHome()">メニュー</button>
 </div>
-<p><small>PC：← →で移動、↑で攻撃、↓で防御　／　スマホ・iPad：ボタン操作</small></p>
+<p><small>PC：← → 移動、↑ 攻撃、↓ 防御</small></p>
 </section>
-<script>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+let scene,camera,renderer,p1,p2,sword1,sword2;
 let game=null,timer=null,cpuTimer=null,guarding=false,attackLock=false;
-function startGame(){
- clearInterval(timer);clearInterval(cpuTimer);
- game={a:0,b:0,x:24,remaining:180,difficulty:Number(document.getElementById('difficulty').value),over:false};
- guarding=false;attackLock=false;
- document.getElementById('home').classList.add('hidden');document.getElementById('game').classList.remove('hidden');
- render();document.getElementById('status').textContent='EN GARDE!';
- timer=setInterval(tick,1000);cpuTimer=setInterval(cpuMove,900);
+function makeFencer(x,color){
+ const root=new THREE.Group();
+ root.position.set(x,0,0);
+ scene.add(root);
+ const uniform=new THREE.MeshStandardMaterial({color:0xf2f5f8,roughness:.8});
+ const dark=new THREE.MeshStandardMaterial({color:color,metalness:.3,roughness:.4});
+ const skin=new THREE.MeshStandardMaterial({color:0xd6ad8d});
+ const metal=new THREE.MeshStandardMaterial({color:0xcbd8e6,metalness:.8,roughness:.25});
+ function part(parent,geo,mat,pos){
+  const m=new THREE.Mesh(geo,mat);m.position.set(...pos);parent.add(m);return m;
+ }
+ part(root,new THREE.CylinderGeometry(.24,.32,.85,12),uniform,[0,1.25,0]);
+ part(root,new THREE.SphereGeometry(.22,16,12),dark,[0,1.95,0]);
+ part(root,new THREE.BoxGeometry(.4,.22,.32),dark,[0,1.95,.04]);
+ const legs=[];
+ for(let i of [-1,1]){
+  const leg=part(root,new THREE.CylinderGeometry(.09,.11,.65,10),uniform,[i*.13,.42,0]);
+  leg.rotation.z=i*.12;legs.push(leg);
+  part(root,new THREE.BoxGeometry(.22,.12,.35),dark,[i*.13,.08,.08]);
+ }
+ const arm=part(root,new THREE.CylinderGeometry(.07,.09,.65,10),uniform,[.38,1.45,0]);
+ arm.rotation.z=-1.1;
+ sword1=null;
+ const sword=part(root,new THREE.CylinderGeometry(.012,.025,1.35,6),metal,[.75,1.62,0]);
+ sword.rotation.z=-Math.PI/2;
+ part(root,new THREE.SphereGeometry(.09,10,8),dark,[.53,1.62,0]);
+ root.userData.arm=arm;root.userData.sword=sword;root.userData.legs=legs;
+ return root;
+}
+function init3D(){
+ const host=document.getElementById('three');
+ host.innerHTML='';
+ scene=new THREE.Scene();scene.background=new THREE.Color(0x172b46);
+ scene.fog=new THREE.Fog(0x172b46,12,25);
+ camera=new THREE.PerspectiveCamera(36,host.clientWidth/host.clientHeight,.1,100);
+ camera.position.set(0,3.3,12);camera.lookAt(0,1,0);
+ renderer=new THREE.WebGLRenderer({antialias:true});
+ renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+ renderer.setSize(host.clientWidth,host.clientHeight);
+ host.appendChild(renderer.domElement);
+ scene.add(new THREE.HemisphereLight(0xffffff,0x42536b,2));
+ const light=new THREE.DirectionalLight(0xffffff,2.5);
+ light.position.set(-3,8,5);scene.add(light);
+ const floor=new THREE.Mesh(new THREE.BoxGeometry(12,.12,3),new THREE.MeshStandardMaterial({color:0xcbd4df,metalness:.25,roughness:.5}));
+ floor.position.set(0,-.12,0);scene.add(floor);
+ for(let x=-5;x<=5;x+=1){
+  const line=new THREE.Mesh(new THREE.BoxGeometry(.012,.008,3),new THREE.MeshBasicMaterial({color:0x6e8299}));
+  line.position.set(x,-.05,0);scene.add(line);
+ }
+ p1=makeFencer(-2.4,0x286fe0);
+ p2=makeFencer(2.4,0xd93c50);
+ p2.rotation.y=Math.PI;
+ p1.rotation.y=0;
+ window.addEventListener('resize',resize3D);
+ animate();
+}
+function resize3D(){
+ if(!renderer||!camera)return;
+ const host=document.getElementById('three');
+ camera.aspect=host.clientWidth/host.clientHeight;camera.updateProjectionMatrix();
+ renderer.setSize(host.clientWidth,host.clientHeight);
+}
+function animate(){
+ requestAnimationFrame(animate);
+ if(renderer&&scene&&camera)renderer.render(scene,camera);
 }
 function render(){
- document.getElementById('s1').textContent=game.a;document.getElementById('s2').textContent=game.b;
- document.getElementById('clock').textContent=String(Math.floor(game.remaining/60)).padStart(2,'0')+':'+String(game.remaining%60).padStart(2,'0');
- document.getElementById('p1').style.left='calc('+game.x+'% - 45px)';
- document.getElementById('p1').classList.toggle('guard',guarding);
+ if(!game)return;
+ document.getElementById('s1').textContent=game.a;
+ document.getElementById('s2').textContent=game.b;
+ document.getElementById('clock').textContent=
+  String(Math.floor(game.remaining/60)).padStart(2,'0')+':'+String(game.remaining%60).padStart(2,'0');
+ if(p1)p1.position.x=-2.4+(game.x-24)*.12;
+ if(p2)p2.position.x=2.4;
+ if(p1)p1.userData.arm.rotation.z=guarding?-.2:(attackLock?-1.5:-1.1);
 }
-function tick(){
- if(!game||game.over)return;
- game.remaining--;render();
- if(game.a>=15||game.b>=15||game.remaining<=0)finish();
-}
-function move(d){
+window.startGame=function(){
+ clearInterval(timer);clearInterval(cpuTimer);
+ document.getElementById('home').classList.add('hidden');
+ document.getElementById('game').classList.remove('hidden');
+ game={a:0,b:0,x:24,remaining:180,difficulty:+document.getElementById('difficulty').value,over:false};
+ guarding=false;attackLock=false;
+ try{init3D();}catch(e){document.getElementById('status').textContent='3D読み込みエラー。通信を確認してね。';console.error(e);}
+ document.getElementById('status').textContent='EN GARDE!';
+ render();
+ timer=setInterval(()=>{
+  if(!game||game.over)return;
+  game.remaining--;render();
+  if(game.a>=15||game.b>=15||game.remaining<=0)finish();
+ },1000);
+ cpuTimer=setInterval(cpuMove,900);
+};
+window.move=function(d){
  if(!game||game.over)return;
  game.x=Math.max(8,Math.min(45,game.x+d*2));render();
-}
-function attack(){
+};
+window.attack=function(){
  if(!game||game.over||attackLock)return;
- attackLock=true;
- document.getElementById('p1').classList.add('attack');
- const distance=Math.abs(game.x-76);
- const chance=distance<34?0.78:distance<43?0.48:0.12;
+ attackLock=true;render();
  setTimeout(()=>{
   if(!game||game.over)return;
-  if(Math.random()<chance){
-   if(!guarding){game.a++;document.getElementById('status').textContent='TOUCHÉ! YOU SCORE!';}
-   else document.getElementById('status').textContent='PARRIED!';
-  }else document.getElementById('status').textContent='ATTACK MISSED';
-  document.getElementById('p1').classList.remove('attack');attackLock=false;render();
+  const distance=Math.abs(game.x-76);
+  const chance=distance<34?.78:distance<43?.48:.12;
+  if(Math.random()<chance&&!guarding){
+   game.a++;document.getElementById('status').textContent='TOUCHÉ! YOU SCORE!';
+  }else document.getElementById('status').textContent=guarding?'PARRIED!':'ATTACK MISSED';
+  attackLock=false;render();
   if(game.a>=15)finish();
  },350);
-}
-function toggleGuard(){
+};
+window.toggleGuard=function(){
  guarding=!guarding;
  document.getElementById('status').textContent=guarding?'GUARD':'EN GARDE!';
  render();
-}
+};
 function cpuMove(){
  if(!game||game.over)return;
- if(Math.random()<0.55)game.x=Math.max(8,Math.min(45,game.x+(Math.random()<0.5?-1:1)));
- if(Math.random()<0.15+game.difficulty*0.07){
+ if(Math.random()<.55)game.x=Math.max(8,Math.min(45,game.x+(Math.random()<.5?-1:1)));
+ if(Math.random()<.15+game.difficulty*.07){
   if(!guarding){game.b++;document.getElementById('status').textContent='CPU TOUCHÉ!';}
   else document.getElementById('status').textContent='CPU ATTACK BLOCKED';
  }
  render();if(game.b>=15)finish();
 }
 function finish(){
- if(!game||game.over)return;game.over=true;clearInterval(timer);clearInterval(cpuTimer);
- let result=game.a>game.b?'WIN':game.a<game.b?'LOSS':'DRAW';
+ if(!game||game.over)return;
+ game.over=true;clearInterval(timer);clearInterval(cpuTimer);
+ const result=game.a>game.b?'WIN':game.a<game.b?'LOSS':'DRAW';
  document.getElementById('status').textContent='BOUT FINISHED — '+result;
- let list=JSON.parse(localStorage.getItem('fencingRecords')||'[]');
- list.unshift({date:new Date().toLocaleString(),result:result,score:game.a+' - '+game.b});
+ const list=JSON.parse(localStorage.getItem('fencingRecords')||'[]');
+ list.unshift({date:new Date().toLocaleString(),result,score:game.a+' - '+game.b});
  localStorage.setItem('fencingRecords',JSON.stringify(list.slice(0,10)));
- alert('試合終了！ '+result+'  '+game.a+' - '+game.b);
+ alert('試合終了！ '+result+' '+game.a+' - '+game.b);
 }
-function showRecords(){
+window.showRecords=function(){
  const box=document.getElementById('records');box.classList.toggle('hidden');
  const list=JSON.parse(localStorage.getItem('fencingRecords')||'[]');
  box.innerHTML='<h2>戦績</h2>'+(list.length?list.map(x=>'<p>'+x.date+'｜'+x.result+'｜'+x.score+'</p>').join(''):'<p>まだ記録がありません</p>');
-}
-function backHome(){clearInterval(timer);clearInterval(cpuTimer);game=null;document.getElementById('game').classList.add('hidden');document.getElementById('home').classList.remove('hidden');}
+};
+window.backHome=function(){
+ clearInterval(timer);clearInterval(cpuTimer);game=null;
+ document.getElementById('game').classList.add('hidden');
+ document.getElementById('home').classList.remove('hidden');
+};
 document.addEventListener('keydown',e=>{
  if(e.key==='ArrowLeft')move(-1);
  if(e.key==='ArrowRight')move(1);
  if(e.key==='ArrowUp')attack();
  if(e.key==='ArrowDown'&&!guarding)toggleGuard();
 });
-document.addEventListener('keyup',e=>{if(e.key==='ArrowDown'&&guarding)toggleGuard();});
+document.addEventListener('keyup',e=>{
+ if(e.key==='ArrowDown'&&guarding)toggleGuard();
+});
 </script>
 </body>
 </html>

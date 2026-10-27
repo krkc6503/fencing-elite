@@ -1,72 +1,546 @@
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>FENCING ELITE</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#07101e;color:#fff;font-family:Arial,sans-serif;overflow:hidden;touch-action:manipulation}canvas{display:block;width:100vw;height:100dvh}button{border:1px solid #5d7698;background:#142641;color:#fff;border-radius:12px;padding:13px 20px;font-weight:bold;font-size:16px;touch-action:none}button:active{background:#2878b8}.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1b3655,#050914 80%);z-index:5;padding:20px}.panel{width:min(540px,100%);text-align:center;background:#0b1729ee;border:1px solid #365579;border-radius:22px;padding:24px;box-shadow:0 0 45px #0008}.logo{font-size:clamp(34px,8vw,58px);font-weight:1000;font-style:italic;letter-spacing:2px;color:#f2ca69;text-shadow:0 0 25px #c8912a55}.sub{color:#9eb7d3;letter-spacing:5px;margin-bottom:25px}.buttons{display:grid;gap:12px;margin-top:20px}.hidden{display:none!important}.hud{position:fixed;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;z-index:2;gap:8px}.scorebox{background:#081426dd;border:1px solid #3c5878;border-radius:12px;padding:8px 14px;text-align:center;min-width:95px}.score{font-size:32px;font-weight:900}.name{font-size:12px;color:#aac2df}.timer{font-size:26px;font-weight:bold}.hud button{pointer-events:auto;padding:9px 12px;font-size:13px}.controls{position:fixed;bottom:15px;left:0;right:0;display:flex;justify-content:space-between;align-items:end;padding:0 16px;z-index:3;gap:12px}.group{display:flex;gap:8px;align-items:end}.ctrl{min-width:64px;min-height:62px;font-size:14px;background:#10213beF}.attack{min-width:100px;min-height:76px;background:#812c36;border-color:#f17b82;font-size:18px}.small{font-size:11px;color:#b4c5da}.chargebar{height:5px;background:#24354c;border-radius:9px;margin-top:5px;overflow:hidden}.chargefill{height:100%;width:0;background:#ffce64}.settings{display:grid;gap:12px;text-align:left;margin-top:18px}.settings label{display:flex;justify-content:space-between;gap:10px}.settings input{width:60%}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#030713;color:#fff;font-family:Arial,sans-serif;touch-action:none}
+canvas{width:100%;height:100%;display:block}
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(#193452,#030713 78%);z-index:5;padding:18px}
+.panel{width:min(480px,100%);padding:25px;text-align:center;background:#071326ed;border:1px solid #597797;border-radius:14px;box-shadow:0 0 60px #000}
+.logo{font-size:clamp(35px,8vw,58px);font-weight:1000;font-style:italic;color:#f3ce80;text-shadow:0 0 25px #d5a54c66}
+.sub{font-size:11px;letter-spacing:5px;color:#9db8d5;margin:8px 0 25px}
+.buttons{display:grid;gap:12px;margin-top:20px}
+button{color:#fff;background:linear-gradient(#203d60,#0a172a);border:1px solid #6b8bab;border-radius:7px;padding:12px;font-weight:bold;font-size:14px;touch-action:none}
+button:active{filter:brightness(1.5)}
+.hidden{display:none!important}
+.hud{position:fixed;top:8px;left:8px;right:8px;display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:start;z-index:3;pointer-events:none}
+.hud button{pointer-events:auto}
+.team{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;background:linear-gradient(90deg,#061b3bea,#07101add);border-top:2px solid #329cff;border-bottom:1px solid #28547f}
+.team.red{background:linear-gradient(270deg,#39101cea,#100a12dd);border-top-color:#ff526b}
+.name{font-size:clamp(10px,2vw,15px);font-weight:bold}
+.score{font-size:clamp(28px,5vw,42px);font-weight:900}
+.clock{text-align:center;text-shadow:0 2px 8px #000}
+.timer{font-size:clamp(24px,4vw,36px);font-weight:900;font-variant-numeric:tabular-nums}
+.round{font-size:10px;letter-spacing:2px}
+.menu{position:absolute;right:0;top:0;transform:translateY(55px);padding:8px 12px}
+.controls{position:fixed;bottom:0;left:0;right:0;padding:12px 10px 15px;display:flex;justify-content:space-between;align-items:end;gap:8px;z-index:4;background:linear-gradient(0deg,#020610d9,transparent)}
+.group{display:flex;gap:6px;align-items:end}
+.ctrl{min-width:48px;height:54px;padding:7px;font-size:18px;background:#08182be8}
+.attack{min-width:83px;height:65px;background:linear-gradient(#a82c43,#4e0c1c);border-color:#ff7684}
+.tiny{display:block;font-size:9px;font-weight:normal;color:#b8cce0}
+.meter{height:4px;background:#16273a;margin-top:4px}
+.meter div{height:100%;background:linear-gradient(90deg,#35d5ff,#1672ec);width:100%}
+.meter .redmeter{background:linear-gradient(90deg,#ff526c,#a91231)}
+.charge{height:3px;background:#172438;margin-top:3px}
+.charge div{height:100%;width:0;background:#ffe28b}
+@media(max-width:600px){
+.hud{gap:4px;left:5px;right:5px}
+.team{padding:6px;gap:4px}
+.controls{padding:7px 5px 12px;gap:3px}
+.group{gap:3px}
+.ctrl{min-width:39px;height:48px;padding:5px}
+.attack{min-width:70px;height:59px;font-size:12px}
+.menu{transform:translateY(50px)}
+}
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
-<div id="home" class="screen"><div class="panel"><div class="logo">FENCING ELITE</div><div class="sub">DUEL • HONOR • VICTORY</div><p>反射神経と戦術で勝利をつかめ。</p><div class="buttons"><button onclick="start(false)">1 PLAYER　—　CPU対戦</button><button onclick="start(true)">2 PLAYERS　—　対人戦</button><button onclick="showSettings()">選手設定</button></div><p class="small">移動：左右キー / 画面ボタン　攻撃：長押しで間合いを伸ばす</p></div></div>
-<div id="settings" class="screen hidden"><div class="panel"><div class="logo" style="font-size:32px">PLAYER SETTINGS</div><div class="settings"><label>移動スピード <input id="speed" type="range" min="0.7" max="1.8" step=".1" value="1.3"></label><label>攻撃スピード <input id="attackSpeed" type="range" min="0.7" max="1.8" step=".1" value="1.4"></label></div><div class="buttons"><button onclick="hideSettings()">戻る</button></div></div></div>
-<div id="hud" class="hud hidden"><div class="scorebox"><div class="name">BLUE</div><div id="ps" class="score">0</div></div><div class="scorebox"><div id="timer" class="timer">3:00</div><div class="name" id="status">READY</div></div><div class="scorebox"><div class="name">RED</div><div id="cs" class="score">0</div></div><button onclick="backHome()">☰ MENU</button></div>
-<div id="controls" class="controls hidden"><div class="group"><button class="ctrl" id="left">◀<br><span class="small">後退</span></button><button class="ctrl" id="right">▶<br><span class="small">前進</span></button><button class="attack" id="attack">ATTACK<div class="chargebar"><div id="chargefill" class="chargefill"></div></div></button></div><div class="group" id="p2controls"><button class="ctrl" id="left2">◀<br><span class="small">P2後退</span></button><button class="ctrl" id="right2">▶<br><span class="small">P2前進</span></button><button class="attack" id="attack2">P2 ATTACK<div class="chargebar"><div id="chargefill2" class="chargefill"></div></div></button></div></div>
-<div id="result" class="screen hidden"><div class="panel"><div class="logo" style="font-size:38px">BOUT OVER</div><h2 id="winner">WINNER</h2><p id="finalscore"></p><div class="buttons"><button onclick="start(twoPlayer)">もう一度対戦</button><button onclick="backHome()">ホームに戻る</button></div></div></div>
+<canvas id="cv"></canvas>
+
+<div id="home" class="screen">
+<div class="panel">
+<div class="logo">FENCING ELITE</div>
+<div class="sub">WORLD CHAMPIONSHIP</div>
+<p>一本を決めろ。</p>
+<div class="buttons">
+<button onclick="start(false)">1 PLAYER　/　CPU MATCH</button>
+<button onclick="start(true)">2 PLAYERS　/　LOCAL MATCH</button>
+</div>
+<p style="font-size:11px;color:#91a9c4;line-height:1.8;margin-top:20px">左右で移動・攻撃ボタン長押しで間合いを調整</p>
+</div>
+</div>
+
+<div id="hud" class="hud hidden">
+<div class="team"><span class="name">🔵 PLAYER</span><span id="ps" class="score">0</span></div>
+<div class="clock"><div id="timer" class="timer">3:00</div><div class="round">FINAL BOUT</div></div>
+<div class="team red"><span id="cs" class="score">0</span><span class="name">CPU 🔴</span></div>
+<button class="menu" onclick="home()">☰ MENU</button>
+</div>
+
+<div id="controls" class="controls hidden">
+<div class="group">
+<button class="ctrl" id="left">◀<span class="tiny">後退</span></button>
+<button class="ctrl" id="right">▶<span class="tiny">前進</span></button>
+<button class="attack" id="atk">ATTACK<div class="charge"><div id="ch1"></div></div></button>
+</div>
+<div id="g2" class="group">
+<button class="ctrl" id="left2">◀<span class="tiny">後退</span></button>
+<button class="ctrl" id="right2">▶<span class="tiny">前進</span></button>
+<button class="attack" id="atk2">P2 ATTACK<div class="charge"><div id="ch2"></div></div></button>
+</div>
+</div>
+
+<div id="result" class="screen hidden">
+<div class="panel">
+<div class="logo">BOUT OVER</div>
+<h2 id="winner"></h2>
+<p id="final"></p>
+<div class="buttons">
+<button onclick="start(two)">もう一度対戦</button>
+<button onclick="home()">ホームに戻る</button>
+</div>
+</div>
+</div>
+
 <script>
-const canvas=document.getElementById('game'),ctx=canvas.getContext('2d',{alpha:false});
-let W=0,H=0,dpr=1,raf=0,last=0,twoPlayer=false,running=false,elapsed=0,scoreP=0,scoreC=0,phase='home',flash=0;
-let speedSetting=1.3,attackSetting=1.4;
-const $=id=>document.getElementById(id);
-function resize(){dpr=Math.min(devicePixelRatio||1,1.5);W=innerWidth;H=innerHeight;canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
-addEventListener('resize',resize);resize();
-function fighter(x,dir,color){return{x,dir,color,move:0,attackT:0,attackDur:.22,charging:false,charge:0,reach:0,cool:0,stamina:100,hit:false,lean:0}}
-let p=fighter(0,1,'#51c9ff'),c=fighter(0,-1,'#ff5e68');
-function resetPositions(){p.x=W*.31;c.x=W*.69;p.dir=1;c.dir=-1;for(let f of [p,c]){f.attackT=0;f.charging=false;f.charge=0;f.reach=0;f.cool=0;f.hit=false;f.stamina=100}}
-function showSettings(){$('home').classList.add('hidden');$('settings').classList.remove('hidden')}
-function hideSettings(){speedSetting=+$('speed').value;attackSetting=+$('attackSpeed').value;$('settings').classList.add('hidden');$('home').classList.remove('hidden')}
-function backHome(){running=false;phase='home';$('hud').classList.add('hidden');$('controls').classList.add('hidden');$('result').classList.add('hidden');$('settings').classList.add('hidden');$('home').classList.remove('hidden')}
-function start(two){twoPlayer=two;scoreP=scoreC=0;elapsed=0;running=true;phase='fight';flash=0;resetPositions();$('home').classList.add('hidden');$('settings').classList.add('hidden');$('result').classList.add('hidden');$('hud').classList.remove('hidden');$('controls').classList.remove('hidden');$('p2controls').style.visibility=two?'visible':'hidden';$('ps').textContent=0;$('cs').textContent=0;$('status').textContent='FIGHT';last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop)}
-function beginAttack(f){if(!running||phase!=='fight'||f.cool>0||f.attackT>0||f.stamina<8)return;f.charging=true;f.charge=0}
-function releaseAttack(f){if(!f.charging)return;f.charging=false;f.reach=Math.min(1,f.charge/.8);f.attackDur=(.23-.035*f.reach)/attackSetting;f.attackT=f.attackDur;f.hit=false;f.stamina=Math.max(0,f.stamina-8-f.reach*10);f.cool=.16}
-function bindHold(id,f){let el=$(id);el.addEventListener('pointerdown',e=>{e.preventDefault();el.setPointerCapture?.(e.pointerId);beginAttack(f)});for(let ev of ['pointerup','pointercancel','lostpointercapture'])el.addEventListener(ev,e=>{e.preventDefault();releaseAttack(f)})}
-bindHold('attack',p);bindHold('attack2',c);
-function bindMove(id,field,value){let el=$(id),on=()=>{keys[field]=value},off=()=>{if(keys[field]===value)keys[field]=0};el.addEventListener('pointerdown',e=>{e.preventDefault();el.setPointerCapture?.(e.pointerId);on()});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>el.addEventListener(ev,off))}
-let keys={p:0,c:0};
-bindMove('left','p',-1);bindMove('right','p',1);bindMove('left2','c',1);bindMove('right2','c',-1);
-addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','a','d','w','A','D','W'].includes(e.key))e.preventDefault();if(e.key==='ArrowLeft')keys.p=-1;if(e.key==='ArrowRight')keys.p=1;if(e.key==='ArrowUp')beginAttack(p);if(e.key.toLowerCase()==='a')keys.c=1;if(e.key.toLowerCase()==='d')keys.c=-1;if(e.key.toLowerCase()==='w')beginAttack(c)});
-addEventListener('keyup',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight')keys.p=0;if(e.key==='ArrowUp')releaseAttack(p);if(e.key.toLowerCase()==='a'||e.key.toLowerCase()==='d')keys.c=0;if(e.key.toLowerCase()==='w')releaseAttack(c)});
-function score(who){if(phase!=='fight')return;if(who==='p')scoreP++;else scoreC++;$('ps').textContent=scoreP;$('cs').textContent=scoreC;flash=.28;resetPositions();if(scoreP>=15||scoreC>=15)finish();else{$('status').textContent='TOUCHE!';setTimeout(()=>{if(running&&phase==='fight')$('status').textContent='FIGHT'},500)}}
-function finish(){phase='result';running=false;$('winner').textContent=scoreP===scoreC?'DRAW':scoreP>scoreC?'BLUE WINS':'RED WINS';$('finalscore').textContent=`${scoreP} — ${scoreC}`;$('result').classList.remove('hidden');$('status').textContent='END'}
-function update(dt){if(!running)return;elapsed+=dt;if(elapsed>=180){finish();return}for(let f of [p,c]){f.cool=Math.max(0,f.cool-dt);if(f.charging)f.charge=Math.min(.8,f.charge+dt);if(f.attackT>0)f.attackT=Math.max(0,f.attackT-dt);f.stamina=Math.min(100,f.stamina+dt*13)}
-if(twoPlayer){p.move=keys.p;c.move=keys.c}else{let gap=c.x-p.x;let target=gap>125?1:gap<95?-1:0;c.move=target;if(Math.random()<dt*.65&&gap<220&&gap>75&&c.cool<=0&&!c.charging&&c.attackT<=0)beginAttack(c);if(c.charging&&c.charge>.2+Math.random()*.28)releaseAttack(c)}
-let sp=260*speedSetting; p.x+=p.move*sp*dt;c.x+=c.move*sp*dt;
-p.x=Math.max(35,Math.min(W-35,p.x));c.x=Math.max(35,Math.min(W-35,c.x));let minGap=56;if(c.x-p.x<minGap){let mid=(p.x+c.x)/2;p.x=mid-minGap/2;c.x=mid+minGap/2}
-if(flash>0)flash-=dt;
-for(let [a,b,who] of [[p,c,'p'],[c,p,'c']]){if(a.attackT>0&&!a.hit){let progress=1-a.attackT/a.attackDur;if(progress>.38&&progress<.9){let reach=105+a.reach*70;let dist=Math.abs(b.x-a.x);if(dist<reach){a.hit=true;score(who)}}}}
-$('timer').textContent=`${Math.floor((180-elapsed)/60)}:${String(Math.floor((180-elapsed)%60)).padStart(2,'0')}`;$('chargefill').style.width=(p.charge/.8*100)+'%';$('chargefill2').style.width=(c.charge/.8*100)+'%';$('status').textContent=flash>0?'TOUCHE!':'FIGHT'}
-function drawBackground(){let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0a172a');g.addColorStop(.55,'#172a40');g.addColorStop(1,'#030710');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-ctx.fillStyle='#101d30';ctx.fillRect(0,H*.2,W,H*.35);
-for(let i=0;i<W/9;i++){let x=i*9;ctx.fillStyle=`hsl(${(i*31+performance.now()*.035)%360},75%,${30+(i%3)*8}%)`;ctx.fillRect(x,H*.25+(i%5)*4,4,9)}
-let y=H*.68;ctx.fillStyle='#c1c8d0';ctx.fillRect(0,y,W,5);ctx.fillStyle='#dfe6ec';ctx.fillRect(0,y+5,W,H-y-5);ctx.fillStyle='#8d9aa8';ctx.fillRect(0,y+5,W,2);
-ctx.strokeStyle='#8e9eae';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(W/2,y);ctx.lineTo(W/2,H);ctx.stroke();ctx.fillStyle='#a7b5c3';ctx.fillRect(W*.18,y,W*.64,3)}
-function drawFencer(f){let x=f.x,y=H*.68,dir=f.dir,charge=f.charging?f.charge/.8:f.reach,attacking=f.attackT>0;ctx.save();ctx.translate(x,y);ctx.scale(dir,1);let lunge=attacking?Math.sin(Math.PI*Math.min(1,(1-f.attackT/f.attackDur)))*22*(1+charge*.8):0;ctx.translate(lunge,0);ctx.lineCap='round';ctx.lineJoin='round';
-ctx.strokeStyle='#121a26';ctx.lineWidth=17;ctx.beginPath();ctx.moveTo(-4,-63);ctx.lineTo(-11,-30);ctx.lineTo(-18,-7);ctx.moveTo(-8,-33);ctx.lineTo(10,-12);ctx.stroke();
-ctx.strokeStyle=f.color;ctx.lineWidth=19;ctx.beginPath();ctx.moveTo(-3,-67);ctx.lineTo(7,-37);ctx.lineTo(16,-13);ctx.stroke();
-ctx.fillStyle='#d9e3eb';ctx.beginPath();ctx.ellipse(2,-84,13,16,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111b2b';ctx.fillRect(-11,-91,26,8);ctx.fillStyle=f.color;ctx.fillRect(-9,-89,21,3);
-ctx.strokeStyle='#e8edf3';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(5,-62);ctx.lineTo(23,-45);ctx.stroke();
-ctx.strokeStyle='#e6e9ed';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(23,-45);let armX=attacking?70+charge*40:charging?35+charge*25:42;let armY=attacking?-48:-39;ctx.lineTo(armX,armY);ctx.stroke();
-ctx.strokeStyle='#d9e3ed';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(armX,armY);ctx.lineTo(armX+105+charge*70,armY-3);ctx.stroke();ctx.strokeStyle='#f7fbff';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(armX,armY-1);ctx.lineTo(armX+105+charge*70,armY-4);ctx.stroke();
-ctx.fillStyle=f.color;ctx.fillRect(-22,-7,12,7);ctx.fillRect(11,-7,12,7);
-if(f.charging){ctx.strokeStyle='#ffdf83';ctx.lineWidth=2;ctx.beginPath();ctx.arc(5,-83,22+charge*12,Math.PI,Math.PI*2);ctx.stroke()}
-ctx.restore();
-ctx.fillStyle='#14243b';ctx.fillRect(f.x-32,y+18,64,5);ctx.fillStyle=f.color;ctx.fillRect(f.x-32,y+18,64*f.stamina/100,5)}
-function draw(){drawBackground();drawFencer(p);drawFencer(c);if(phase==='fight'){ctx.fillStyle='#fff';ctx.font='bold 13px Arial';ctx.textAlign='center';ctx.fillText(twoPlayer?'P1: ← → / ↑':'← → MOVE / ↑ ATTACK',W*.25,H*.16);ctx.fillText(twoPlayer?'P2: A D / W':'HOLD ATTACK TO EXTEND REACH',W*.75,H*.16)}}
-function loop(now){if(!running)return;let dt=Math.min(.033,(now-last)/1000||0);last=now;update(dt);draw();raf=requestAnimationFrame(loop)}
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+let W,H,D,run=false,two=false,phase='home',last=0,time=0,sp=0,sc=0,flash=0,scoreTint='#087dff',keys={p:0,c:0},lights=[];
+const $=x=>document.getElementById(x);
+
+function resize(){
+D=Math.min(devicePixelRatio||1,1.5);
+W=innerWidth;H=innerHeight;
+cv.width=W*D;cv.height=H*D;
+ctx.setTransform(D,0,0,D,0,0);
+makeLights();draw();
+}
+addEventListener('resize',resize);
+
+function F(x,dir,color){
+return{x,dir,color,charge:0,charging:false,attack:0,dur:.115,reach:0,cool:0,stamina:100,hit:false,move:0,phase:Math.random()*7,step:0,vx:0,stepLift:0};
+}
+let p=F(0,1,'#e9f3ff'),c=F(0,-1,'#f0f3fa');
+
+function makeLights(){
+lights=[];
+let rows=Math.max(13,Math.floor(H/19)),cols=Math.ceil(W/5);
+for(let r=0;r<rows;r++)for(let i=0;i<cols;i++){
+let x=i*5+Math.random()*3;
+let y=H*.16+r*H*.36/rows+Math.random()*3;
+let blue=x<W*.5;
+let hue=blue?(190+Math.random()*28):(345+Math.random()*20);
+lights.push({x,y,r,blue,hue,phase:Math.random()*7,size:.5+Math.random()*1.5});
+}
+}
+
+function start(t){
+two=t;sp=sc=0;time=0;run=true;phase='fight';
+p.x=W*.29;c.x=W*.71;
+[p,c].forEach(f=>{
+f.attack=0;f.charge=0;f.charging=false;f.cool=0;f.stamina=100;f.hit=false;f.vx=0;f.step=0;
+});
+$('home').classList.add('hidden');
+$('result').classList.add('hidden');
+$('hud').classList.remove('hidden');
+$('controls').classList.remove('hidden');
+$('g2').style.visibility=two?'visible':'hidden';
+$('ps').textContent=sp;$('cs').textContent=sc;
+last=performance.now();
+cancelAnimationFrame(window.raf);
+window.raf=requestAnimationFrame(loop);
+}
+
+function home(){
+run=false;phase='home';
+$('home').classList.remove('hidden');
+$('hud').classList.add('hidden');
+$('controls').classList.add('hidden');
+$('result').classList.add('hidden');
 draw();
+}
+
+function begin(f){
+if(!run||f.cool>0||f.attack>0||f.stamina<4)return;
+f.charging=true;f.charge=0;
+}
+
+function release(f){
+if(!f.charging)return;
+f.charging=false;
+f.reach=Math.min(1,f.charge/.42);
+f.dur=.115-f.reach*.035;
+f.attack=f.dur;
+f.hit=false;
+f.stamina=Math.max(0,f.stamina-5-f.reach*8);
+f.cool=.035;
+}
+
+function holdAttack(id,f){
+let e=$(id);
+e.addEventListener('pointerdown',v=>{v.preventDefault();begin(f);});
+['pointerup','pointercancel','lostpointercapture'].forEach(v=>e.addEventListener(v,()=>release(f)));
+}
+
+function moveBind(id,side,val){
+let e=$(id);
+e.addEventListener('pointerdown',v=>{
+v.preventDefault();
+e.setPointerCapture?.(v.pointerId);
+keys[side]=val;
+});
+['pointerup','pointercancel','lostpointercapture'].forEach(v=>e.addEventListener(v,()=>{
+if(keys[side]===val)keys[side]=0;
+}));
+}
+
+holdAttack('atk',p);
+holdAttack('atk2',c);
+moveBind('left','p',-1);
+moveBind('right','p',1);
+moveBind('left2','c',1);
+moveBind('right2','c',-1);
+
+addEventListener('keydown',e=>{
+if(e.key==='ArrowLeft')keys.p=-1;
+if(e.key==='ArrowRight')keys.p=1;
+if(e.key==='ArrowUp')begin(p);
+if(e.key.toLowerCase()==='a')keys.c=1;
+if(e.key.toLowerCase()==='d')keys.c=-1;
+if(e.key.toLowerCase()==='w')begin(c);
+});
+addEventListener('keyup',e=>{
+if(e.key==='ArrowLeft'||e.key==='ArrowRight')keys.p=0;
+if(e.key==='ArrowUp')release(p);
+if('ad'.includes(e.key.toLowerCase()))keys.c=0;
+if(e.key.toLowerCase()==='w')release(c);
+});
+
+function point(w){
+if(!run)return;
+if(w==='p'){sp++;scoreTint='#087dff';}
+else{sc++;scoreTint='#ff173f';}
+$('ps').textContent=sp;$('cs').textContent=sc;
+flash=.72;
+p.x=W*.29;c.x=W*.71;
+for(let f of [p,c]){
+f.attack=0;f.charging=false;f.charge=0;f.cool=.2;f.hit=false;f.vx=0;
+}
+if(sp>=15||sc>=15)finish();
+}
+
+function finish(){
+run=false;phase='result';
+$('winner').textContent=sp===sc?'DRAW':sp>sc?'PLAYER WINS':'RED WINS';
+$('final').textContent=sp+' — '+sc;
+$('result').classList.remove('hidden');
+}
+
+function update(dt){
+if(!run)return;
+time+=dt;
+if(time>=180){finish();return;}
+
+for(let f of [p,c]){
+f.cool=Math.max(0,f.cool-dt);
+if(f.charging)f.charge=Math.min(.42,f.charge+dt);
+if(f.attack>0)f.attack=Math.max(0,f.attack-dt);
+f.stamina=Math.min(100,f.stamina+dt*17);
+}
+
+let gap=c.x-p.x;
+if(!two){
+c.move=gap>100?1:gap<75?-1:0;
+if(gap<255&&gap>50&&c.cool<=0&&c.attack<=0&&!c.charging&&Math.random()<dt*8)begin(c);
+if(c.charging&&c.charge>.12)release(c);
+}
+
+let targetP=keys.p*360;
+let targetC=two?keys.c*360:c.move*245;
+
+for(let f of [p,c]){
+let target=f===p?targetP:targetC;
+f.vx+=(target-f.vx)*Math.min(1,dt*(target?16:22));
+if(Math.abs(f.vx)<3)f.vx=0;
+f.x+=f.vx*dt;
+if(Math.abs(f.vx)>25){
+f.step+=dt*(Math.abs(f.vx)/22);
+f.stepLift=Math.max(0,Math.sin(f.step*2.7))*Math.min(5,Math.abs(f.vx)/75);
+}else f.stepLift*=.7;
+}
+
+p.x=Math.max(35,Math.min(W-35,p.x));
+c.x=Math.max(35,Math.min(W-35,c.x));
+
+if(c.x-p.x<48){
+let m=(p.x+c.x)/2;
+p.x=m-24;c.x=m+24;p.vx=0;c.vx=0;
+}
+
+for(let [a,b,w] of [[p,c,'p'],[c,p,'c']]){
+if(a.attack>0&&!a.hit){
+let prog=1-a.attack/a.dur;
+if(prog>.1&&prog<.97&&Math.abs(b.x-a.x)<145+a.reach*145){
+a.hit=true;point(w);
+}
+}
+}
+
+flash=Math.max(0,flash-dt);
+$('timer').textContent=Math.floor((180-time)/60)+':'+String(Math.floor((180-time)%60)).padStart(2,'0');
+$('ch1').style.width=p.charge/.42*100+'%';
+$('ch2').style.width=c.charge/.42*100+'%';
+}
+
+function background(){
+let g=ctx.createLinearGradient(0,0,0,H);
+g.addColorStop(0,'#050b18');
+g.addColorStop(.43,'#0b1b30');
+g.addColorStop(.72,'#182b3e');
+g.addColorStop(1,'#02050c');
+ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+// Arena trusses and spotlights
+ctx.strokeStyle='#1a304a';ctx.lineWidth=2;
+for(let i=0;i<12;i++){
+let x=i*W/11;
+ctx.beginPath();ctx.moveTo(x,0);
+ctx.lineTo(W/2+(x-W/2)*.72,H*.18);ctx.stroke();
+}
+for(let i=0;i<18;i++){
+let x=i*W/17;
+ctx.fillStyle='#eaf5ff';ctx.shadowColor='#9ecfff';ctx.shadowBlur=12;
+ctx.beginPath();ctx.arc(x,H*.145,1.5+(i%3)*.4,0,Math.PI*2);ctx.fill();
+}
+ctx.shadowBlur=0;
+
+// Neutral crowd; point colors appear only during scoring
+ctx.fillStyle='#07152b';ctx.fillRect(0,H*.17,W,H*.38);
+let crowd=ctx.createLinearGradient(0,H*.17,0,H*.55);
+crowd.addColorStop(0,'#101d30');
+crowd.addColorStop(1,'#17283b');
+ctx.fillStyle=crowd;ctx.fillRect(0,H*.17,W,H*.38);
+
+for(let l of lights){
+let tw=.55+.45*Math.sin(performance.now()*.002+l.phase);
+ctx.globalAlpha=tw;
+ctx.fillStyle=`hsl(${l.hue},${l.blue?40:30}%,${42+tw*18}%)`;
+ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=l.size*2;
+ctx.beginPath();ctx.arc(l.x,l.y,l.size,0,Math.PI*2);ctx.fill();
+}
+ctx.globalAlpha=1;ctx.shadowBlur=0;
+
+// Central display
+ctx.fillStyle='#08172b';ctx.fillRect(W*.405,H*.19,W*.19,H*.095);
+ctx.strokeStyle='#395b7c';ctx.strokeRect(W*.405,H*.19,W*.19,H*.095);
+ctx.fillStyle='#d8e8f8';ctx.textAlign='center';
+ctx.font=`bold ${Math.max(10,W*.013)}px Arial`;
+ctx.fillText('FENCING  •  WORLD ARENA',W*.5,H*.225);
+ctx.fillStyle='#6ccaff';ctx.fillText('BLUE',W*.455,H*.26);
+ctx.fillStyle='#ff6c80';ctx.fillText('RED',W*.545,H*.26);
+
+// Regulation-style piste with perspective
+let y=H*.62,L=-W*.055,R=W*1.055,topL=W*.23,topR=W*.77;
+ctx.beginPath();
+ctx.moveTo(topL,y);ctx.lineTo(topR,y);ctx.lineTo(R,H);ctx.lineTo(L,H);
+ctx.closePath();
+let piste=ctx.createLinearGradient(0,y,0,H);
+piste.addColorStop(0,'#a7b4c0');
+piste.addColorStop(.08,'#596e81');
+piste.addColorStop(.22,'#30485e');
+piste.addColorStop(.62,'#192d42');
+piste.addColorStop(1,'#101b2b');
+ctx.fillStyle=piste;ctx.fill();
+
+function pxAt(t){return L+(topL-L)*t;}
+function rxAt(t){return R+(topR-R)*t;}
+function pyAt(t){return H+(y-H)*t;}
+
+ctx.save();
+ctx.beginPath();
+ctx.moveTo(topL,y);ctx.lineTo(topR,y);ctx.lineTo(R,H);ctx.lineTo(L,H);
+ctx.closePath();ctx.clip();
+
+ctx.fillStyle='#bd233822';
+ctx.beginPath();
+ctx.moveTo(W*.42,y);ctx.lineTo(W*.58,y);
+ctx.lineTo(W*.64,H);ctx.lineTo(W*.36,H);
+ctx.closePath();ctx.fill();
+
+for(let i=1;i<19;i++){
+let t=i/19,yy=pyAt(t),xl=pxAt(t),xr=rxAt(t);
+ctx.strokeStyle=i%3===0?'#b7c6d333':'#dce7f00d';
+ctx.lineWidth=i%3===0?1.4:1;
+ctx.beginPath();ctx.moveTo(xl,yy);ctx.lineTo(xr,yy);ctx.stroke();
+}
+for(let i=0;i<42;i++){
+let t=i/42,xx=pxAt(t);
+ctx.strokeStyle='#d5e2ef12';
+ctx.beginPath();ctx.moveTo(xx,y);ctx.lineTo(L+(R-L)*t,H);ctx.stroke();
+}
+ctx.restore();
+
+// Side rails
+ctx.strokeStyle='#dce6ef';ctx.lineWidth=2.4;
+ctx.beginPath();
+ctx.moveTo(topL,y);ctx.lineTo(L,H);
+ctx.moveTo(topR,y);ctx.lineTo(R,H);
+ctx.stroke();
+
+ctx.strokeStyle='#718da6';ctx.lineWidth=5;
+ctx.beginPath();
+ctx.moveTo(topL,y+3);ctx.lineTo(L,H);
+ctx.moveTo(topR,y+3);ctx.lineTo(R,H);
+ctx.stroke();
+
+ctx.strokeStyle='#dbe6ef';ctx.lineWidth=1.6;
+ctx.beginPath();
+ctx.moveTo(topL,y);ctx.lineTo(topR,y);ctx.lineTo(R,H);ctx.lineTo(L,H);
+ctx.closePath();ctx.stroke();
+
+function pisteLine(t,color,width,dash=[]){
+let yy=pyAt(t),xl=pxAt(t),xr=rxAt(t);
+ctx.strokeStyle=color;ctx.lineWidth=width;ctx.setLineDash(dash);
+ctx.beginPath();ctx.moveTo(xl,yy);ctx.lineTo(xr,yy);ctx.stroke();
+ctx.setLineDash([]);
+}
+pisteLine(.78,'#f3f7fb99',1.5);
+pisteLine(.43,'#f3f7fbcc',2);
+pisteLine(.27,'#ffcc62',2.5);
+pisteLine(.13,'#f3f7fb99',1.5);
+
+ctx.strokeStyle='#e6edf5cc';ctx.lineWidth=1.5;
+ctx.beginPath();ctx.moveTo(W*.5,y);ctx.lineTo(W*.5,H);ctx.stroke();
+
+ctx.strokeStyle='#d6e4f022';ctx.lineWidth=1;
+for(let i=0;i<10;i++){
+let t=i/10,xx=pxAt(t);
+ctx.beginPath();ctx.moveTo(xx,H*.88);ctx.lineTo(xx+5,H*.88);ctx.stroke();
+}
+
+let refl=ctx.createLinearGradient(0,y,0,H);
+refl.addColorStop(0,'#ffffff24');
+refl.addColorStop(.35,'#91caff0b');
+refl.addColorStop(1,'#00000000');
+ctx.fillStyle=refl;ctx.fillRect(0,y,W,H-y);
+}
+
+function limb(x1,y1,x2,y2,width,color){
+ctx.strokeStyle='#090e18';ctx.lineWidth=width+3;
+ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+ctx.strokeStyle=color;ctx.lineWidth=width;
+ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+}
+
+function drawFencer(f){
+let y=H*.62,dir=f.dir,charging=f.charging,active=f.attack>0;
+let prog=active?1-f.attack/f.dur:0;
+let lunge=active?Math.sin(prog*Math.PI)*Math.min(W*.06,55):0;
+let charge=charging?f.charge/.42:f.reach;
+
+ctx.save();
+ctx.translate(f.x+dir*lunge,y-f.stepLift*.45);
+ctx.scale(dir,1);
+if(active)ctx.rotate(-.035);
+
+let bob=Math.sin(performance.now()*.008+f.phase)*1.8;
+let suit='#f0f3f7';
+
+let stride=Math.sin(f.step*2.7)*Math.min(10,Math.abs(f.vx)/38);
+let lift=f.stepLift;
+let frontX=active?65+prog*25:28+stride;
+let backX=-23-stride*.45;
+let frontLift=active?0:lift;
+let backLift=active?0:Math.max(0,-Math.sin(f.step*2.7))*Math.min(4,Math.abs(f.vx)/90);
+
+// Articulated legs
+limb(-3,-52,backX,-25-backLift,12,suit);
+limb(backX,-25-backLift,backX-12,-3+backLift,9,suit);
+limb(-1,-51,frontX,-27-frontLift,13,suit);
+limb(frontX,-27-frontLift,frontX+12,-3+frontLift,9,suit);
+
+ctx.fillStyle='#111e30';
+ctx.beginPath();ctx.ellipse(backX-8,-2+backLift,14,4,-.12,0,Math.PI*2);ctx.fill();
+ctx.beginPath();ctx.ellipse(frontX+17,-2+frontLift,14,4,-.08,0,Math.PI*2);ctx.fill();
+
+// Jacket and shoulders
+ctx.fillStyle=suit;
+ctx.beginPath();
+ctx.moveTo(-15,-112+bob);ctx.lineTo(13,-113+bob);
+ctx.lineTo(20,-76);ctx.lineTo(8,-49);
+ctx.lineTo(-13,-52);ctx.lineTo(-22,-78);
+ctx.closePath();ctx.fill();
+ctx.strokeStyle='#aab8c7';ctx.lineWidth=1;ctx.stroke();
+ctx.fillStyle=f.color;ctx.fillRect(-8,-107,15,5);
+ctx.fillStyle='#aebdce';ctx.fillRect(-8,-96,16,2);
+
+// Mask
+ctx.fillStyle='#e5edf5';
+ctx.beginPath();ctx.ellipse(0,-128+bob,15,18,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#182535';
+ctx.beginPath();ctx.ellipse(2,-131+bob,15,17,0,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#a7bacd';
+ctx.beginPath();ctx.ellipse(5,-131+bob,10,12,0,0,Math.PI*2);ctx.fill();
+ctx.strokeStyle='#263d56';ctx.lineWidth=1;
+for(let i=-5;i<=12;i+=3){
+ctx.beginPath();ctx.moveTo(i,-141+bob);ctx.lineTo(i+4,-120+bob);ctx.stroke();
+}
+ctx.fillStyle=suit;ctx.fillRect(-8,-146,16,3);
+
+// Sword arm and blade
+let armX=active?88:charging?38+charge*45:45;
+let armY=active?-91:-84;
+limb(9,-104,24,-95,9,suit);
+limb(24,-95,armX,armY,8,suit);
+
+ctx.fillStyle='#18263a';
+ctx.beginPath();ctx.arc(armX,armY,5,0,Math.PI*2);ctx.fill();
+
+let tip=armX+125+charge*100;
+ctx.strokeStyle='#9fbed8';ctx.lineWidth=4;
+ctx.beginPath();ctx.moveTo(armX,armY);ctx.lineTo(tip,armY-3);ctx.stroke();
+ctx.strokeStyle='#fff';ctx.lineWidth=1.3;
+ctx.beginPath();ctx.moveTo(armX,armY-1);ctx.lineTo(tip,armY-4);ctx.stroke();
+ctx.strokeStyle='#dbe7f3';ctx.lineWidth=3;
+ctx.beginPath();ctx.moveTo(armX-5,armY-2);ctx.lineTo(armX+5,armY+2);ctx.stroke();
+
+if(charging){
+ctx.strokeStyle='#ffe39a';ctx.lineWidth=2;
+ctx.shadowColor='#ffe39a';ctx.shadowBlur=12;
+ctx.beginPath();ctx.arc(0,-128,22+charge*10,Math.PI,Math.PI*2);ctx.stroke();
+ctx.shadowBlur=0;
+}
+ctx.restore();
+
+// Floor shadow and stamina
+ctx.fillStyle='#0007';
+ctx.beginPath();ctx.ellipse(f.x,y+7,39,7,0,0,Math.PI*2);ctx.fill();
+let bw=Math.min(100,W*.11);
+ctx.fillStyle='#101c2d';ctx.fillRect(f.x-bw/2,y+13,bw,4);
+ctx.fillStyle=f.color;ctx.fillRect(f.x-bw/2,y+13,bw*f.stamina/100,4);
+}
+
+function draw(){
+background();
+drawFencer(p);drawFencer(c);
+
+if(flash>0){
+let a=Math.min(.92,flash*1.25);
+ctx.fillStyle=scoreTint;
+ctx.globalAlpha=a;
+ctx.fillRect(0,0,W,H);
+ctx.globalAlpha=1;
+}
+
+if(phase==='fight'){
+ctx.fillStyle='#d6e6f6';
+ctx.textAlign='center';
+ctx.font='bold 11px Arial';
+ctx.fillText(two?'P1: ← → / ↑　　P2: A D / W':'← → MOVE　　HOLD ATTACK TO EXTEND REACH',W/2,H*.38);
+}
+}
+
+function loop(now){
+if(!run)return;
+let dt=Math.min(.025,(now-last)/1000||0);
+last=now;update(dt);draw();
+window.raf=requestAnimationFrame(loop);
+}
+
+resize();
 </script>
 </body>
 </html>

@@ -1,596 +1,285 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>FENCING ELITE</title>
 <style>
+:root{--bg:#07111f;--panel:#122844;--line:#4b86c4;--text:#eef6ff;--muted:#a9c1dd}
 *{box-sizing:border-box}
-body{margin:0;background:#08101f;color:#fff;font-family:Arial,sans-serif;text-align:center}
-button,select{font-size:16px;padding:11px 14px;margin:4px;border-radius:9px;border:1px solid #659bdf;background:#162c4b;color:#fff;touch-action:manipulation}
-button:active,button.active{background:#3376c7}
-button:disabled{opacity:.45}
-h1{font-size:clamp(30px,7vw,55px);letter-spacing:3px;text-shadow:0 0 18px #168bff}
-h2{color:#9fcaff}
-.panel{max-width:1000px;margin:auto;padding:15px}
+body{margin:0;background:radial-gradient(ellipse at 50% 25%,#183454,#07111f 72%);color:var(--text);font-family:system-ui,-apple-system,sans-serif;text-align:center}
+header{display:flex;justify-content:space-around;align-items:center;padding:12px 8px 6px}
+small{color:var(--muted)}
+.score{font-size:clamp(28px,5vw,44px);font-weight:800;line-height:1.05}
+.clock{font-size:clamp(24px,4vw,34px);color:#b9ddff}
+#arena{width:min(96vw,1280px);height:min(60vh,610px);min-height:330px;display:block;margin:0 auto;border:2px solid #416991;border-radius:14px;background:#10243b;touch-action:none;box-shadow:0 12px 45px #0005}
+#hud{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:10px}
+button{border:1px solid #5598df;background:#183454;color:white;border-radius:11px;padding:12px 17px;font-size:17px;cursor:pointer;touch-action:manipulation}
+button:active,button.active{background:#2864a0}
+.hint{color:#91aac5;font-size:13px;padding:5px 10px 18px}
+#gauges{display:flex;justify-content:space-around;gap:16px;margin:0 auto;max-width:700px;color:#bdd3eb;font-size:13px}
+.bar{height:8px;background:#263c54;border-radius:9px;overflow:hidden;width:min(36vw,260px);margin-top:5px}
+.fill{height:100%;width:100%;background:#55d69e;transition:width .1s}
+.overlay{position:fixed;inset:0;background:#06101fee;display:flex;align-items:center;justify-content:center;padding:20px;z-index:5}
+.card{width:min(500px,100%);background:#122844;border:1px solid #4b86c4;border-radius:18px;padding:25px;box-shadow:0 20px 70px #0008}
+.card h1{letter-spacing:2px}
+.card p{color:#b8cce1}
 .hidden{display:none!important}
-#arena{width:100%;height:min(55vh,480px);min-height:300px;background:#132744;border:2px solid #46668d;border-radius:12px;overflow:hidden;position:relative}
-#three{position:absolute;inset:0;width:100%;height:100%}
-#hud{display:flex;justify-content:space-around;align-items:center;gap:8px}
-.score{font-size:42px;font-weight:bold}
-#clock{font-size:25px;color:#b6d9ff}
-#status{min-height:26px;color:#b6d9ff}
-.controls{display:flex;flex-wrap:wrap;justify-content:center;gap:3px}
-.meter{width:min(38vw,250px);height:10px;background:#293b52;border-radius:8px;overflow:hidden;margin:4px auto}
-.fill{height:100%;width:100%;background:#58d68d;transition:width .1s}
-small{color:#b1c2dc}
-.hint{font-size:13px;color:#a8bad3}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px}
 </style>
 </head>
 <body>
+<header>
+<div><small id="pname">PLAYER</small><div class="score" id="ps">0</div></div>
+<div><div class="clock" id="time">03:00</div><b id="call">EN GARDE!</b></div>
+<div><small id="cname">CPU</small><div class="score" id="cs">0</div></div>
+</header>
 
-<section id="home" class="panel">
-<h1>FENCING ELITE</h1>
-<p>ÉPÉE · THE ULTIMATE DUEL</p>
-<h2>3D FENCING SIMULATOR</h2>
-<p>3分間・15点先取</p>
+<canvas id="arena" aria-label="フェンシング試合画面"></canvas>
 
-<label>CPU難易度
-<select id="difficulty">
-<option value="1">BEGINNER</option>
-<option value="2">INTERMEDIATE</option>
-<option value="3">ADVANCED</option>
-<option value="4">EXPERT</option>
-</select>
-</label>
-<br>
+<div id="gauges">
+<div>PLAYER スタミナ<div class="bar"><div class="fill" id="pg"></div></div></div>
+<div>CPU スタミナ<div class="bar"><div class="fill" id="cg"></div></div></div>
+</div>
 
-<button onclick="startGame()">START</button>
-<button onclick="showRecords()">RECORDS</button>
-
-<div id="records" class="hidden"></div>
-<p class="hint">攻撃は距離・タイミング・スタミナで判定。防御中は移動が遅くなります。</p>
-</section>
-
-<section id="game" class="panel hidden">
 <div id="hud">
-<div>
-<small>PLAYER</small>
-<div id="s1" class="score">0</div>
-<small>STAMINA</small>
-<div class="meter"><div id="st1" class="fill"></div></div>
+<button id="back">◀ 後退</button>
+<button id="forward">前進 ▶</button>
+<button id="attack">⚔ 攻撃</button>
+<button id="guard">🛡 防御</button>
+<button id="menu">メニュー</button>
 </div>
 
-<div>
-<div id="clock">03:00</div>
-<div id="status">EN GARDE!</div>
+<div class="hint">PC：← → 移動、↑ 攻撃、↓ 防御 ／ スマホ・タブレット：ボタンを長押し</div>
+
+<div class="overlay" id="start">
+<div class="card">
+<h1>FENCING ELITE</h1>
+<p>エペ・フェンシング シミュレーター</p>
+<div class="row">
+<button id="startcpu">CPU対戦</button>
+<button id="start2p">2人対戦（準備中）</button>
+</div>
+<p>前進・後退・攻撃・防御を使って勝利を目指そう。</p>
+</div>
 </div>
 
-<div>
-<small>CPU</small>
-<div id="s2" class="score">0</div>
-<small>STAMINA</small>
-<div class="meter"><div id="st2" class="fill"></div></div>
+<div class="overlay hidden" id="result">
+<div class="card">
+<h1 id="rtitle">試合終了</h1>
+<p id="rtext"></p>
+<div class="row">
+<button id="again">もう一度</button>
+<button id="toMenu">メニュー</button>
 </div>
 </div>
-
-<div id="arena"><div id="three"></div></div>
-
-<div class="controls">
-<button id="retreat">◀ 後退</button>
-<button id="advance">前進 ▶</button>
-<button id="attackBtn">⚔ 攻撃（長押し→離す）</button>
-<button id="guardBtn">🛡 防御</button>
-<button onclick="backHome()">メニュー</button>
 </div>
 
-<p class="hint">
-PC：← → 移動、↑ 攻撃、↓ 防御。<br>
-スマホ・iPad：ボタンを長押しできます。
-</p>
-</section>
+<script>
+(()=>{
+const c=document.querySelector('#arena'),ctx=c.getContext('2d');
+let W=1000,H=500,started=false,ended=false,mode='cpu',last=0,remaining=180,ps=0,cs=0,player,cpu,keys={};
+const $=id=>document.getElementById(id);
 
-<script type="module">
-let THREE=null,scene,camera,renderer,p1,p2;
-let game=null,timer=null,lastTick=0,raf=0;
-let keys={left:false,right:false,guard:false};
-let attackCharge=0,chargeTimer=null;
+function resize(){
+const r=c.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);
+c.width=Math.round(r.width*d);
+c.height=Math.round(r.height*d);
+W=c.width;H=c.height;
+draw();
+}
+window.addEventListener('resize',resize);
 
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-
-function makeFencer(x,color){
- const root=new THREE.Group();
- root.position.set(x,0,0);
- scene.add(root);
-
- const uniform=new THREE.MeshStandardMaterial({
-  color:0xf2f5f8,roughness:.8
- });
- const dark=new THREE.MeshStandardMaterial({
-  color,metalness:.3,roughness:.4
- });
- const metal=new THREE.MeshStandardMaterial({
-  color:0xcbd8e6,metalness:.8,roughness:.25
- });
-
- function part(geo,mat,pos){
-  const m=new THREE.Mesh(geo,mat);
-  m.position.set(...pos);
-  root.add(m);
-  return m;
- }
-
- part(new THREE.CylinderGeometry(.24,.32,.85,12),uniform,[0,1.25,0]);
- part(new THREE.SphereGeometry(.23,16,12),dark,[0,1.95,0]);
- part(new THREE.BoxGeometry(.42,.2,.34),dark,[0,1.95,.04]);
-
- const legs=[];
- for(const i of [-1,1]){
-  const leg=part(
-   new THREE.CylinderGeometry(.09,.11,.65,10),
-   uniform,[i*.13,.42,0]
-  );
-  leg.rotation.z=i*.12;
-  legs.push(leg);
-  part(new THREE.BoxGeometry(.22,.12,.35),dark,[i*.13,.08,.08]);
- }
-
- const arm=part(
-  new THREE.CylinderGeometry(.07,.09,.65,10),
-  uniform,[.38,1.45,0]
- );
- arm.rotation.z=-1.1;
-
- const sword=part(
-  new THREE.CylinderGeometry(.012,.025,1.35,6),
-  metal,[.75,1.62,0]
- );
- sword.rotation.z=-Math.PI/2;
-
- part(new THREE.SphereGeometry(.09,10,8),dark,[.53,1.62,0]);
-
- root.userData={arm,sword,legs,baseX:x,walk:0};
- return root;
+function line(x1,y1,x2,y2,color,width){
+ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';
+ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
 }
 
-async function init3D(){
- if(!THREE){
-  const mod=await import(
-   'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js'
-  );
-  THREE=mod;
- }
-
- const host=document.getElementById('three');
- host.innerHTML='';
-
- scene=new THREE.Scene();
- scene.background=new THREE.Color(0x172b46);
- scene.fog=new THREE.Fog(0x172b46,12,25);
-
- camera=new THREE.PerspectiveCamera(
-  36,host.clientWidth/host.clientHeight,.1,100
- );
- camera.position.set(0,3.3,12);
- camera.lookAt(0,1,0);
-
- renderer=new THREE.WebGLRenderer({antialias:true});
- renderer.setPixelRatio(Math.min(devicePixelRatio,2));
- renderer.setSize(host.clientWidth,host.clientHeight);
- host.appendChild(renderer.domElement);
-
- scene.add(new THREE.HemisphereLight(0xffffff,0x42536b,2));
-
- const light=new THREE.DirectionalLight(0xffffff,2.5);
- light.position.set(-3,8,5);
- scene.add(light);
-
- const floor=new THREE.Mesh(
-  new THREE.BoxGeometry(12,.12,3),
-  new THREE.MeshStandardMaterial({
-   color:0xcbd4df,metalness:.25,roughness:.5
-  })
- );
- floor.position.set(0,-.12,0);
- scene.add(floor);
-
- for(let x=-5;x<=5;x+=1){
-  const line=new THREE.Mesh(
-   new THREE.BoxGeometry(.012,.008,3),
-   new THREE.MeshBasicMaterial({color:0x6e8299})
-  );
-  line.position.set(x,-.05,0);
-  scene.add(line);
- }
-
- p1=makeFencer(-2.3,0x286fe0);
- p2=makeFencer(2.3,0xd93c50);
- p2.rotation.y=Math.PI;
-
- window.addEventListener('resize',resize3D);
- cancelAnimationFrame(raf);
- animate();
+function fencer(p,color,dir){
+let x=p.x*W/1000,y=H*.67,s=Math.min(W/1000,H/500);
+ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+ctx.strokeStyle='#f4f7fa';ctx.lineWidth=18;ctx.lineCap='round';
+ctx.beginPath();ctx.moveTo(0,-78);ctx.lineTo(-10,-26);ctx.lineTo(-19,0);
+ctx.moveTo(-7,-28);ctx.lineTo(17,-3);ctx.stroke();
+ctx.fillStyle='#f7f9fc';ctx.beginPath();
+ctx.moveTo(-18,-118);ctx.lineTo(18,-118);ctx.lineTo(25,-77);ctx.lineTo(-22,-77);
+ctx.closePath();ctx.fill();ctx.strokeStyle='#dce5ed';ctx.lineWidth=2;ctx.stroke();
+ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(0,-135,18,14,0,0,Math.PI*2);ctx.fill();
+ctx.strokeStyle='#162a42';ctx.lineWidth=3;ctx.stroke();
+ctx.fillStyle='#fff';ctx.fillRect(-14,-141,28,4);
+line(-7,-78,-9,-30,'#eef3f8',12);
+line(-9,-30,-24,-4,'#eef3f8',10);
+line(7,-78,8,-34,'#eef3f8',12);
+line(8,-34,24,-4,'#eef3f8',10);
+ctx.fillStyle=color;ctx.fillRect(-32,-2,18,7);ctx.fillRect(17,-2,18,7);
+let shoulderX=dir===1?9:-9,armX=dir===1?45:-45;
+line(shoulderX,-108,armX,-101,'#f3f6f9',12);
+ctx.fillStyle=color;ctx.beginPath();ctx.arc(armX,-101,7,0,7);ctx.fill();
+let tip=armX+dir*(p.attack>0?155:110);
+line(armX,-101,tip,-101,'#d6e4ef',2);
+line(tip,-101,tip+dir*12,-101,'#f7fbff',1);
+if(p.attack>0){
+ctx.strokeStyle='#ffd66b';ctx.lineWidth=3;ctx.beginPath();
+ctx.arc(armX,-101,22,0,Math.PI*2);ctx.stroke();
+}
+if(p.guard){
+ctx.strokeStyle='#69c6ff';ctx.lineWidth=4;ctx.beginPath();
+ctx.arc(armX,-100,26,-1.5,1.5);ctx.stroke();
+}
+ctx.restore();
 }
 
-function resize3D(){
- if(!renderer||!camera)return;
- const host=document.getElementById('three');
- camera.aspect=host.clientWidth/host.clientHeight;
- camera.updateProjectionMatrix();
- renderer.setSize(host.clientWidth,host.clientHeight);
+function draw(){
+if(!ctx||!W)return;
+ctx.clearRect(0,0,W,H);
+let g=ctx.createLinearGradient(0,0,0,H);
+g.addColorStop(0,'#122942');g.addColorStop(1,'#1b3552');
+ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ctx.fillStyle='#233e5b';ctx.fillRect(0,H*.12,W,H*.20);
+for(let i=0;i<90;i++){
+let x=i*W/90;
+ctx.fillStyle=i%3===0?'#b4c5d5':i%3===1?'#6c8ba9':'#d7e1e9';
+ctx.beginPath();ctx.arc(x+4,H*.18+(i%4)*5,2.5,0,7);ctx.fill();
+}
+ctx.fillStyle='#d5e0ea';ctx.beginPath();
+ctx.moveTo(W*.15,H*.68);ctx.lineTo(W*.85,H*.68);
+ctx.lineTo(W*.94,H*.82);ctx.lineTo(W*.06,H*.82);
+ctx.closePath();ctx.fill();
+ctx.fillStyle='#a6b9cc';ctx.fillRect(W*.06,H*.82,W*.88,5);
+for(let i=1;i<10;i++)
+line(W*(.15+i*.07),H*.68,W*(.06+i*.088),H*.82,'#839ab0',1);
+line(W*.5,H*.69,W*.5,H*.81,'#627f9a',2);
+if(player)fencer(player,'#287ee8',1);
+if(cpu)fencer(cpu,'#ef4656',-1);
+if((player&&player.hit>0)||(cpu&&cpu.hit>0)){
+ctx.fillStyle='#ffe06b';
+ctx.font='bold '+Math.round(H*.07)+'px sans-serif';
+ctx.textAlign='center';ctx.fillText('TOUCH!',W/2,H*.42);
+}
 }
 
-function animate(){
- raf=requestAnimationFrame(animate);
- if(game&&!game.over)updateFrame();
- if(renderer&&scene&&camera)renderer.render(scene,camera);
+function ui(){
+$('ps').textContent=ps;
+$('cs').textContent=cs;
+$('time').textContent=String(Math.floor(remaining/60)).padStart(2,'0')+':'+String(Math.floor(remaining%60)).padStart(2,'0');
+$('pg').style.width=player.st+'%';
+$('cg').style.width=cpu.st+'%';
+$('pg').style.background=player.st<25?'#ff6b6b':'#55d69e';
+$('cg').style.background=cpu.st<25?'#ff6b6b':'#55d69e';
 }
 
-function updateFrame(){
- const now=performance.now();
- const dt=Math.min(.05,(now-(game.lastFrame||now))/1000);
- game.lastFrame=now;
- if(!dt)return;
-
- const moveSpeed=(keys.guard||game.player.guard)?.65:1.25;
- let moving=false;
-
- if(keys.left){
-  game.player.x-=moveSpeed*dt;
-  moving=true;
- }
- if(keys.right){
-  game.player.x+=moveSpeed*dt;
-  moving=true;
- }
-
- game.player.x=clamp(game.player.x,-4.7,-.7);
-
- if(moving){
-  game.player.stamina=Math.max(0,game.player.stamina-9*dt);
- }else if(!game.player.attacking){
-  game.player.stamina=Math.min(100,game.player.stamina+12*dt);
- }
-
- if(game.player.guard||keys.guard){
-  game.player.stamina=Math.max(0,game.player.stamina-5*dt);
- }
-
- const gap=game.cpu.x-game.player.x;
-
- game.cpu.cooldown=Math.max(0,game.cpu.cooldown-dt);
- game.cpu.recover=Math.max(0,game.cpu.recover-dt);
-
- if(game.cpu.stamina<100&&!game.cpu.attacking){
-  game.cpu.stamina=Math.min(100,game.cpu.stamina+8*dt);
- }
-
- const difficulty=game.difficulty;
-
- if(game.cpu.cooldown<=0&&game.cpu.recover<=0){
-  if(gap>2.35&&Math.random()<(.35+difficulty*.12)){
-   game.cpu.x-=(.75+difficulty*.12)*dt*10;
-   game.cpu.stamina=Math.max(0,game.cpu.stamina-4*dt);
-  }else if(gap<1.25&&Math.random()<.45){
-   game.cpu.x=Math.min(4.7,game.cpu.x+.8*dt*10);
-  }else if(gap<=2.55&&Math.random()<(.08+difficulty*.035)){
-   cpuAttack();
-  }
-
-  game.cpu.cooldown=.18+Math.random()*(.55-difficulty*.07);
- }
-
- game.cpu.x=clamp(game.cpu.x,.7,4.7);
-
- if(p1){
-  p1.position.x=game.player.x;
-  p1.userData.arm.rotation.z=game.player.attacking?-.45:
-   (game.player.guard||keys.guard?-.25:-1.1);
-  p1.userData.sword.rotation.z=game.player.attacking?-.2:-Math.PI/2;
-  p1.userData.legs.forEach((l,i)=>{
-   l.rotation.z=(moving?Math.sin(now/85+i*Math.PI)*.3:0)
-    +(i===0?-.12:.12);
-  });
- }
-
- if(p2){
-  p2.position.x=game.cpu.x;
-  p2.userData.arm.rotation.z=game.cpu.attacking?-.45:
-   (game.cpu.guard?-.25:-1.1);
-  p2.userData.sword.rotation.z=game.cpu.attacking?-.2:-Math.PI/2;
- }
-
- game.player.guard=!!keys.guard;
- render();
+function reset(){
+ps=cs=0;remaining=180;
+player={x:290,st:100,guard:false,attack:0,hit:0};
+cpu={x:710,st:100,guard:false,attack:0,hit:0};
+ended=false;started=true;
+$('start').classList.add('hidden');
+$('result').classList.add('hidden');
+$('call').textContent='EN GARDE!';
+ui();draw();
 }
-
-function render(){
- if(!game)return;
-
- document.getElementById('s1').textContent=game.a;
- document.getElementById('s2').textContent=game.b;
-
- document.getElementById('clock').textContent=
-  String(Math.floor(game.remaining/60)).padStart(2,'0')+':'+
-  String(game.remaining%60).padStart(2,'0');
-
- document.getElementById('st1').style.width=game.player.stamina+'%';
- document.getElementById('st2').style.width=game.cpu.stamina+'%';
-
- document.getElementById('st1').style.background=
-  game.player.stamina<25?'#ff6b6b':'#58d68d';
-
- document.getElementById('st2').style.background=
-  game.cpu.stamina<25?'#ff6b6b':'#58d68d';
-}
-
-window.startGame=function(){
- clearInterval(timer);
- cancelAnimationFrame(raf);
-
- document.getElementById('home').classList.add('hidden');
- document.getElementById('game').classList.remove('hidden');
-
- game={
-  a:0,b:0,remaining:180,
-  difficulty:+document.getElementById('difficulty').value,
-  over:false,lastFrame:performance.now(),
-  player:{
-   x:-2.3,stamina:100,guard:false,
-   attacking:false,cooldown:0
-  },
-  cpu:{
-   x:2.3,stamina:100,guard:false,
-   attacking:false,cooldown:0,recover:0
-  }
- };
-
- keys={left:false,right:false,guard:false};
- attackCharge=0;
-
- document.getElementById('status').textContent='EN GARDE!';
-
- init3D().catch(e=>{
-  document.getElementById('status').textContent=
-   '3D読み込みに失敗。通信を確認して再読み込みしてね。';
-  console.error(e);
- });
-
- render();
-
- timer=setInterval(()=>{
-  if(!game||game.over)return;
-  game.remaining--;
-  render();
-
-  if(game.a>=15||game.b>=15||game.remaining<=0){
-   finish();
-  }
- },1000);
-};
-
-function playerAttack(strong){
- if(!game||game.over||game.player.cooldown>0||game.player.stamina<8)return;
-
- const p=game.player;
- const c=game.cpu;
- const gap=c.x-p.x;
- const cost=strong?24:12;
-
- p.stamina=Math.max(0,p.stamina-cost);
- p.cooldown=strong?1.05:.55;
- p.attacking=true;
-
- const attackDuration=strong?520:280;
-
- document.getElementById('status').textContent=
-  strong?'STRONG ATTACK!':'ATTACK!';
-
- setTimeout(()=>{
-  if(!game||game.over)return;
-  p.attacking=false;
-
-  const range=strong?2.8:2.0;
-  const inRange=gap<=range&&gap>=.45;
-
-  const cpuParry=c.guard&&
-   Math.random()<(.25+game.difficulty*.12);
-
-  const accuracy=(p.stamina<20?.65:1)*(strong?.82:1);
-
-  if(inRange&&Math.random()<accuracy&&!cpuParry){
-   game.a++;
-   document.getElementById('status').textContent='TOUCHÉ! YOU SCORE!';
-   c.recover=strong?1.0:.55;
-   c.x=clamp(c.x+.15,.7,4.7);
-  }else{
-   document.getElementById('status').textContent=
-    cpuParry?'PARRIED!':
-    (inRange?'ATTACK MISSED':'OUT OF DISTANCE');
-  }
-
-  render();
-  if(game.a>=15)finish();
- },attackDuration);
-}
-
-function cpuAttack(){
- if(!game||game.over)return;
-
- const c=game.cpu;
- const p=game.player;
- const gap=c.x-p.x;
-
- if(c.stamina<10)return;
-
- c.attacking=true;
- c.stamina=Math.max(0,c.stamina-(game.difficulty>=3?16:12));
- c.cooldown=game.difficulty===4?.65:1.0;
-
- const delay=
-  game.difficulty===1?700:
-  game.difficulty===2?520:
-  game.difficulty===3?390:300;
-
- setTimeout(()=>{
-  if(!game||game.over)return;
-
-  c.attacking=false;
-
-  const range=game.difficulty>=3?2.35:2.05;
-  const blocked=keys.guard&&p.stamina>3;
-
-  if(gap<=range&&gap>=.45&&!blocked&&
-     Math.random()<(.35+game.difficulty*.14)){
-   game.b++;
-   document.getElementById('status').textContent='CPU TOUCHÉ!';
-   p.recover=.5;
-  }else{
-   document.getElementById('status').textContent=
-    blocked?'ATTACK BLOCKED':'CPU MISSED';
-  }
-
-  render();
-  if(game.b>=15)finish();
- },delay);
-}
-
-window.move=function(d){
- if(!game||game.over)return;
- game.player.x=clamp(game.player.x+d*.25,-4.7,-.7);
- render();
-};
-
-window.attack=function(){
- playerAttack(false);
-};
-
-window.toggleGuard=function(){
- keys.guard=!keys.guard;
- document.getElementById('guardBtn').classList.toggle('active',keys.guard);
- document.getElementById('status').textContent=
-  keys.guard?'GUARD':'EN GARDE!';
-};
 
 function finish(){
- if(!game||game.over)return;
-
- game.over=true;
- clearInterval(timer);
-
- const result=game.a>game.b?'WIN':
-  game.a<game.b?'LOSS':'DRAW';
-
- document.getElementById('status').textContent=
-  'BOUT FINISHED — '+result;
-
- const list=JSON.parse(
-  localStorage.getItem('fencingRecords')||'[]'
- );
-
- list.unshift({
-  date:new Date().toLocaleString(),
-  result,
-  score:game.a+' - '+game.b
- });
-
- localStorage.setItem(
-  'fencingRecords',JSON.stringify(list.slice(0,10))
- );
-
- alert('試合終了！ '+result+' '+game.a+' - '+game.b);
+ended=true;started=false;
+$('rtitle').textContent=ps>cs?'VICTOIRE !':cs>ps?'DÉFAITE':'MATCH NUL';
+$('rtext').textContent='PLAYER '+ps+' — '+cs+' CPU';
+$('result').classList.remove('hidden');
 }
 
-window.showRecords=function(){
- const box=document.getElementById('records');
- box.classList.toggle('hidden');
+function touch(a,d,isPlayer){
+if(a.attack<=0||a.st<3)return;
+let dist=Math.abs(a.x-d.x);
+if(dist<210){
+if(d.guard&&Math.random()<.65){
+a.st=Math.max(0,a.st-13);
+}else{
+if(isPlayer)ps++;else cs++;
+a.hit=.65;d.hit=.65;
+$('call').textContent=isPlayer?'PLAYER TOUCHÉ!':'CPU TOUCHÉ!';
+if(ps>=15||cs>=15)finish();
+else setTimeout(()=>{if(!ended)$('call').textContent='EN GARDE!'},800);
+}
+}
+}
 
- const list=JSON.parse(
-  localStorage.getItem('fencingRecords')||'[]'
- );
+function update(dt){
+if(!started||ended)return;
+remaining=Math.max(0,remaining-dt);
+if(remaining===0){finish();return}
+for(const p of [player,cpu]){
+p.attack=Math.max(0,p.attack-dt);
+p.hit=Math.max(0,p.hit-dt);
+p.st=Math.min(100,p.st+(p.guard?-.15:9)*dt);
+}
+if(keys.left){player.x-=105*dt;player.st=Math.max(0,player.st-7*dt)}
+if(keys.right){player.x+=105*dt;player.st=Math.max(0,player.st-7*dt)}
+player.guard=!!keys.guard;
+if(keys.guard)player.st=Math.max(0,player.st-10*dt);
+let d=player.x-cpu.x;
+if(Math.abs(d)>245){
+cpu.x+=Math.sign(d)*45*dt;
+cpu.st=Math.max(0,cpu.st-3*dt);
+}else if(Math.random()<dt*.8&&cpu.attack===0&&cpu.st>10){
+cpu.attack=.4;cpu.st-=12;touch(cpu,player,false);
+}
+cpu.guard=Math.random()<.12&&Math.abs(d)<220;
+player.x=Math.max(90,Math.min(460,player.x));
+cpu.x=Math.max(540,Math.min(910,cpu.x));
+ui();draw();
+}
 
- box.innerHTML='<h2>戦績</h2>'+
-  (list.length?
-   list.map(x=>'<p>'+x.date+'｜'+x.result+'｜'+x.score+'</p>').join(''):
-   '<p>まだ記録がありません</p>');
+function loop(t){
+let dt=Math.min((t-last)/1000||0,.04);
+last=t;update(dt);requestAnimationFrame(loop);
+}
+
+function hold(id,key){
+let b=$(id);
+const down=e=>{e.preventDefault();keys[key]=true;b.classList.add('active')};
+const up=e=>{e.preventDefault();keys[key]=false;b.classList.remove('active')};
+b.addEventListener('pointerdown',down);
+['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,up));
+}
+
+hold('back','left');
+hold('forward','right');
+hold('guard','guard');
+
+function doAttack(){
+if(started&&!ended&&player.attack<=0&&player.st>5){
+player.attack=.5;
+player.st=Math.max(0,player.st-12);
+setTimeout(()=>{if(player.attack>0)touch(player,cpu,true)},180);
+}
+}
+
+$('attack').addEventListener('pointerdown',e=>{e.preventDefault();doAttack()});
+
+window.addEventListener('keydown',e=>{
+if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))e.preventDefault();
+if(e.key==='ArrowLeft')keys.left=true;
+if(e.key==='ArrowRight')keys.right=true;
+if(e.key==='ArrowDown')keys.guard=true;
+if(e.key==='ArrowUp'&&!e.repeat)doAttack();
+});
+
+window.addEventListener('keyup',e=>{
+if(e.key==='ArrowLeft')keys.left=false;
+if(e.key==='ArrowRight')keys.right=false;
+if(e.key==='ArrowDown')keys.guard=false;
+});
+
+$('startcpu').onclick=()=>{mode='cpu';$('cname').textContent='CPU';reset()};
+$('start2p').onclick=()=>alert('2人対戦は今後の更新で追加します。');
+$('menu').onclick=()=>{started=false;$('start').classList.remove('hidden')};
+$('again').onclick=reset;
+$('toMenu').onclick=()=>{
+$('result').classList.add('hidden');
+$('start').classList.remove('hidden');
 };
-
-window.backHome=function(){
- clearInterval(timer);
- cancelAnimationFrame(raf);
- game=null;
- document.getElementById('game').classList.add('hidden');
- document.getElementById('home').classList.remove('hidden');
-};
-
-function bindHold(id,down,up){
- const el=document.getElementById(id);
-
- el.addEventListener('pointerdown',e=>{
-  e.preventDefault();
-  el.classList.add('active');
-  down();
- });
-
- for(const ev of ['pointerup','pointercancel','pointerleave']){
-  el.addEventListener(ev,()=>{
-   el.classList.remove('active');
-   up();
-  });
- }
-}
-
-bindHold('retreat',()=>keys.left=true,()=>keys.left=false);
-bindHold('advance',()=>keys.right=true,()=>keys.right=false);
-
-const atk=document.getElementById('attackBtn');
-
-atk.addEventListener('pointerdown',e=>{
- e.preventDefault();
- attackCharge=performance.now();
- atk.classList.add('active');
- chargeTimer=setTimeout(()=>{},450);
-});
-
-function releaseAttack(){
- if(!attackCharge)return;
-
- const held=performance.now()-attackCharge;
- attackCharge=0;
- clearTimeout(chargeTimer);
- atk.classList.remove('active');
-
- playerAttack(held>=450);
-}
-
-for(const ev of ['pointerup','pointercancel','pointerleave']){
- atk.addEventListener(ev,releaseAttack);
-}
-
-bindHold(
- 'guardBtn',
- ()=>{
-  keys.guard=true;
-  document.getElementById('guardBtn').classList.add('active');
- },
- ()=>{
-  keys.guard=false;
-  document.getElementById('guardBtn').classList.remove('active');
- }
-);
-
-document.addEventListener('keydown',e=>{
- if(e.key==='ArrowLeft')keys.left=true;
- if(e.key==='ArrowRight')keys.right=true;
- if(e.key==='ArrowDown')keys.guard=true;
- if(e.key==='ArrowUp'&&!e.repeat)playerAttack(false);
-});
-
-document.addEventListener('keyup',e=>{
- if(e.key==='ArrowLeft')keys.left=false;
- if(e.key==='ArrowRight')keys.right=false;
- if(e.key==='ArrowDown')keys.guard=false;
-});
+resize();
+requestAnimationFrame(loop);
+})();
 </script>
 </body>
 </html>

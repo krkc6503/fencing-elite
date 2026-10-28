@@ -269,19 +269,41 @@ function drawStaticBackground(){
 }
 
 function start(local){
- two=local;sp=0;sc=0;time=0;boutLive=false;paused=false;aiTimer=0;
- p=fighter(W*.36,1,'#39caff','p');
- c=fighter(W*.64,-1,'#ff4c68','c');
- keys.p=keys.c=0;
- $('ps').textContent='0';$('cs').textContent='0';
- updateNames();
- $('home').classList.add('hidden');$('custom').classList.add('hidden');
- $('pause').classList.add('hidden');$('result').classList.add('hidden');
- $('hud').classList.remove('hidden');$('controls').classList.remove('hidden');
- $('g2').style.display=two?'flex':'none';
- $('ready').classList.remove('hidden');
- $('ready').innerHTML='ON GUARD<br><small>タップして PLAY</small>';
- last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+  two = local;
+  run = true;
+  phase = 'fight';
+  paused = false;
+  boutLive = false;
+  sp = 0;
+  sc = 0;
+  time = 0;
+  aiTimer = 0;
+  keys.p = 0;
+  keys.c = 0;
+
+  p = fighter(W * 0.36, 1, '#39caff', 'p');
+  c = fighter(W * 0.64, -1, '#ff4c68', 'c');
+
+  $('ps').textContent = '0';
+  $('cs').textContent = '0';
+  $('timer').textContent = '3:00';
+  updateNames();
+
+  $('home').classList.add('hidden');
+  $('custom').classList.add('hidden');
+  $('pause').classList.add('hidden');
+  $('result').classList.add('hidden');
+  $('hud').classList.remove('hidden');
+  $('controls').classList.remove('hidden');
+  $('ready').classList.remove('hidden');
+
+  $('ready').innerHTML = 'ON GUARD<br><small>タップして PLAY</small>';
+  $('g2').style.display = two ? 'flex' : 'none';
+
+  last = performance.now();
+  cancelAnimationFrame(raf);
+  rebindAttacks();
+  raf = requestAnimationFrame(loop);
 }
 function playBout(){
  if(!run||paused)return;

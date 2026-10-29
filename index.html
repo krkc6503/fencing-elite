@@ -6,1119 +6,519 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>FENCING ELITE</title>
 <style>
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#071323;color:#fff;font-family:Arial,sans-serif;touch-action:none}
-canvas{width:100%;height:100%;display:block}
-button,input,select{font:inherit}
-button{color:white;background:#122943;border:1px solid #567594;border-radius:9px;padding:11px;font-weight:bold;touch-action:manipulation}
-button:active{filter:brightness(1.35)}
-input,select{width:100%;padding:9px;background:#081629;color:white;border:1px solid #496987;border-radius:7px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080e19;color:#fff;font-family:Arial,sans-serif;touch-action:manipulation}
+button,input{font:inherit}
+button{border:1px solid #394a62;background:#18263b;color:#fff;border-radius:12px;padding:12px;font-weight:bold}
+button:active{transform:scale(.97)}
+.screen{display:none;position:absolute;inset:0;overflow:auto;padding:22px 16px}
+.screen.active{display:block}
+.wrap{max-width:780px;margin:auto}
+.logo{font-size:clamp(34px,8vw,58px);font-weight:1000;letter-spacing:2px;margin-top:7vh}
+.logo span{color:#f4ca72}
+.sub{font-size:11px;letter-spacing:3px;color:#8ea5c5;margin:12px 0 28px}
+.panel{background:#111b2c;border:1px solid #2c3c54;border-radius:17px;padding:17px;margin:12px 0}
+h2{font-size:18px;margin:0 0 14px}
+.menuBtn{width:100%;text-align:left;margin:4px 0;min-height:58px}
+.menuBtn strong{display:block}
+.menuBtn small{display:block;color:#a1b4ce;margin-top:5px}
+.primary{background:linear-gradient(120deg,#168ddf,#20c8ed);color:#03111c;border:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.field{margin:12px 0}
+.field label{display:block;font-size:12px;color:#a5b9d4;margin-bottom:6px}
+input[type=text]{width:100%;background:#09111f;color:#fff;border:1px solid #34445c;border-radius:8px;padding:10px}
+input[type=color]{width:100%;height:38px;background:#101a2b;border:1px solid #34445c;border-radius:8px}
+input[type=range]{width:100%;accent-color:#25b9ef}
+.stat{display:grid;grid-template-columns:75px 1fr 20px;align-items:center;gap:8px;font-size:12px;margin:12px 0}
+#match{padding:0;overflow:hidden;background:#090f19}
+#gameCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;transform:scale(1);transition:transform .65s cubic-bezier(.2,.7,.2,1);will-change:transform}
+#gameCanvas.zoom-blue{transform:scale(1.8);transform-origin:36% 69%}
+#gameCanvas.zoom-red{transform:scale(1.8);transform-origin:64% 69%}
+.hud{position:absolute;z-index:2;top:env(safe-area-inset-top);left:0;right:0;padding:10px;pointer-events:none;transition:opacity .25s}
+.scoreboard{max-width:680px;margin:auto;display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.scorebox{background:#101a2bef;border:1px solid #34445d;border-radius:10px;padding:7px 10px;min-width:0}
+.scorebox.blue{border-left:4px solid #20baff}
+.scorebox.red{border-right:4px solid #ff4c65;text-align:right}
+.playername{font-size:clamp(10px,2.5vw,14px);font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.score{font-size:clamp(27px,7vw,40px);font-weight:1000;line-height:1.1}
+.clock{text-align:center;font-size:22px;font-weight:bold;font-variant-numeric:tabular-nums}
+.clock small{display:block;font-size:9px;color:#9db0cb}
+.topMenu{position:absolute;z-index:5;right:10px;top:calc(78px + env(safe-area-inset-top))}
+.topMenu button{background:#111b2de8;padding:8px 12px}
+.controls{position:absolute;z-index:4;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;gap:8px;pointer-events:none;transition:opacity .25s}
+.controlSide{display:flex;gap:7px;align-items:end;pointer-events:auto}
+.ctrl{width:clamp(48px,12vw,72px);height:clamp(54px,13vw,72px);padding:4px;border-radius:15px;background:#15243cef;font-size:21px;touch-action:none;user-select:none}
+.ctrl small{display:block;font-size:8px;margin-top:3px}
+.ctrl.blue{border-bottom:4px solid #20baff}
+.ctrl.red{border-bottom:4px solid #ff4c65}
+.ctrl.attack{width:clamp(68px,18vw,98px);background:#e9b957;color:#211500;border:0;font-size:12px}
+.overlay{display:none;position:absolute;z-index:10;inset:0;align-items:center;justify-content:center;padding:18px;background:#030711d9;backdrop-filter:blur(6px)}
+.overlay.show{display:flex}
+.modal{width:min(100%,440px);max-height:90%;overflow:auto;background:#111c2e;border:1px solid #364760;border-radius:20px;padding:22px;text-align:center}
+.modal h2{font-size:24px}
+.modal p{color:#9fb2ce;font-size:13px;line-height:1.7}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}
+#status{position:absolute;z-index:3;top:43%;left:50%;transform:translate(-50%,-50%);text-align:center;width:90%;pointer-events:none;text-shadow:0 3px 16px #000}
+#statusBig{font-size:clamp(30px,8vw,55px);font-weight:1000;letter-spacing:2px}
+#statusSmall{font-size:12px;color:#d4e0ef;margin-top:7px}
+#introCard{position:absolute;z-index:8;left:50%;top:48%;transform:translate(-50%,-50%);width:min(88%,390px);text-align:center;pointer-events:none;opacity:0;transition:opacity .35s}
+#introCard.visible{opacity:1}
+.introTag{font-size:11px;letter-spacing:5px;font-weight:bold;margin-bottom:9px}
+.introName{font-size:clamp(30px,9vw,52px);font-weight:1000;overflow-wrap:anywhere;text-shadow:0 4px 20px #000}
+.introRole{font-size:12px;letter-spacing:3px;margin-top:8px;text-shadow:0 2px 10px #000}
+.introLine{height:3px;width:75px;margin:15px auto;background:#20baff}
+#introCard.red .introLine{background:#ff4c65}
+#introCard .introTag{color:#20baff}
+#introCard.red .introTag{color:#ff4c65}
 .hidden{display:none!important}
-.screen{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:14px;background:#020814dd;overflow:auto}
-.panel{width:min(540px,100%);max-height:95%;overflow:auto;padding:20px;background:#09182bf7;border:1px solid #567594;border-radius:15px}
-.logo{text-align:center;font-size:clamp(30px,7vw,48px);font-weight:1000;font-style:italic;color:#f3ce80}
-.sub{text-align:center;font-size:10px;letter-spacing:4px;color:#9db8d5;margin:5px 0 18px}
-.buttons{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
-.buttons .wide{grid-column:1/-1}
-h3{margin:14px 0 8px;font-size:14px;color:#9fd4ff}
-label{display:block;font-size:12px;color:#c1d4e7;margin:9px 0 5px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.colors{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
-.swatch{width:30px;height:30px;padding:0;border-radius:50%;border:2px solid #8ca9c5}
-.swatch.selected{outline:3px solid white;outline-offset:2px}
-.stat{display:grid;grid-template-columns:90px 1fr 30px;gap:8px;align-items:center;font-size:12px;margin:10px 0}
-.stat input{padding:0;accent-color:#45c8ff}
-.stat output{text-align:right;font-weight:bold}
-.hud{position:fixed;z-index:3;top:8px;left:8px;right:8px;display:grid;grid-template-columns:1fr auto 1fr;gap:6px;pointer-events:none}
-.hud>*{pointer-events:auto}
-.team{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:6px 8px;background:#071426ed;border:1px solid #345674;border-top:2px solid #38aaff;border-radius:8px;min-width:0}
-.team.red{border-top-color:#ff536b}
-.name{font-size:clamp(9px,2vw,13px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.score{font-size:clamp(25px,5vw,37px);font-weight:900}
-.clock{text-align:center;background:#071426ed;border:1px solid #345674;border-radius:8px;padding:4px 10px}
-.timer{font-size:clamp(22px,4vw,32px);font-weight:900;font-variant-numeric:tabular-nums}
-.round{font-size:10px}
-.menu{position:absolute;right:0;top:0;transform:translateY(52px);padding:9px}
-.controls{position:fixed;z-index:4;bottom:0;left:0;right:0;padding:8px 6px 12px;display:flex;justify-content:space-between;align-items:end;gap:4px;background:linear-gradient(0deg,#020610c9,transparent)}
-.group{display:flex;gap:4px;align-items:end}
-.ctrl{min-width:40px;height:49px;padding:4px;font-size:17px}
-.tiny{display:block;font-size:9px;font-weight:normal;color:#b8cce0}
-.attack{min-width:72px;height:59px;background:#792b3a;border-color:#ff7180;font-size:12px}
-.charge{height:4px;background:#172438;margin-top:4px;border-radius:4px}
-.charge div{height:100%;width:0;background:#ffe28b}
-.ready{position:fixed;z-index:4;left:50%;top:43%;transform:translate(-50%,-50%);min-width:160px;background:#102641f2;border:1px solid #8bb9df;font-size:19px;padding:15px 24px}
-@media(max-width:600px){
- .panel{padding:15px}
- .hud{left:5px;right:5px;gap:3px}
- .team{padding:5px}
- .controls{padding:6px 4px 10px;gap:2px}
- .group{gap:3px}
- .ctrl{min-width:34px;height:47px}
- .attack{min-width:62px;font-size:11px}
-}
+@media(max-width:430px){.controls{left:6px;right:6px;gap:3px}.controlSide{gap:4px}.ctrl{width:44px;height:54px}.ctrl.attack{width:62px}.scorebox{padding:6px}.topMenu{top:calc(76px + env(safe-area-inset-top))}}
 </style>
 </head>
 <body>
-<canvas id="cv"></canvas>
 
-<div id="home" class="screen">
- <div class="panel">
-  <div class="logo">FENCING ELITE</div>
-  <div class="sub">WORLD CHAMPIONSHIP</div>
-  <p style="text-align:center">一本を決めろ。</p>
-  <div class="buttons">
-   <button class="wide" onclick="start(false)">1 PLAYER / CPU MATCH</button>
-   <button class="wide" onclick="start(true)">2 PLAYERS / LOCAL MATCH</button>
-   <button class="wide" onclick="showCustomize()">選手カスタマイズ</button>
-  </div>
-  <p style="font-size:11px;color:#91a9c4;line-height:1.8;text-align:center">左右で移動・攻撃ボタン長押しで間合い調整</p>
- </div>
+<section id="home" class="screen active">
+<div class="wrap">
+<div class="logo">FENCING <span>ELITE</span></div>
+<div class="sub">THE ART OF THE BOUT</div>
+<div class="panel">
+<h2>GAME MODE</h2>
+<button class="menuBtn primary" onclick="startMatch('cpu')"><strong>⚔ 1 PLAYER — VS CPU</strong><small>コンピューターと対戦</small></button>
+<button class="menuBtn" onclick="startMatch('2p')"><strong>♟ 2 PLAYERS — LOCAL</strong><small>1台の画面で2人対戦</small></button>
+</div>
+<div class="panel">
+<h2>FENCER CUSTOMIZATION</h2>
+<div class="grid2">
+<button onclick="openCustomize('blue')"><strong style="color:#20baff">BLUE FENCER</strong><small id="homeBlue">BLUE</small></button>
+<button onclick="openCustomize('red')"><strong style="color:#ff4c65">RED FENCER</strong><small id="homeRed">RED / CPU</small></button>
+</div>
+</div>
+<div class="panel">
+<h2>RULES</h2>
+<div style="font-size:12px;color:#a8bad2;line-height:2">
+・15点先取、または3分間<br>
+・相手に突きが届くと得点<br>
+・ピストの端を越えると相手に1点<br>
+・得点後は自動で再開<br>
+・攻撃ボタン長押しでランジを強化
+</div>
+</div>
+</div>
+</section>
+
+<section id="customize" class="screen">
+<div class="wrap">
+<button onclick="goHome()">← HOME</button>
+<h2 style="margin-top:20px">FENCER CUSTOMIZATION</h2>
+<div class="panel">
+<div class="grid2">
+<button onclick="openCustomize('blue')">BLUE FENCER</button>
+<button onclick="openCustomize('red')">RED FENCER</button>
+</div>
+<div class="field"><label>選手名</label><input id="fName" type="text" maxlength="18"></div>
+<div class="grid2">
+<div class="field"><label>マスクの色</label><input id="maskColor" type="color"></div>
+<div class="field"><label>ユニフォーム</label><input id="suitColor" type="color"></div>
+</div>
+<div class="field"><label>剣の色</label><input id="bladeColor" type="color"></div>
+<h3>能力値（合計15）</h3>
+<div id="stats"></div>
+<button class="primary" style="width:100%;margin-top:14px" onclick="saveCustomize()">SAVE</button>
+</div>
+</div>
+</section>
+
+<section id="match" class="screen">
+<canvas id="gameCanvas"></canvas>
+<div class="hud" id="hud">
+<div class="scoreboard">
+<div class="scorebox blue">
+<div id="blueName" class="playername">BLUE</div>
+<div id="blueScore" class="score">0</div>
+</div>
+<div class="clock"><span id="clock">03:00</span><small>FENCING BOUT</small></div>
+<div class="scorebox red">
+<div id="redName" class="playername">RED</div>
+<div id="redScore" class="score">0</div>
+</div>
+</div>
 </div>
 
-<div id="custom" class="screen hidden">
- <div class="panel">
-  <div class="logo" style="font-size:30px">PLAYER EDIT</div>
-  <div class="sub">CUSTOMIZE YOUR FENCER</div>
-  <div class="row">
-   <div>
-    <h3>🔵 BLUE PLAYER</h3>
-    <label>選手名</label><input id="nameP" maxlength="16" value="BLUE">
-    <label>マスクの色</label><div id="maskP" class="colors"></div>
-    <label>ユニフォームの色</label><div id="suitP" class="colors"></div>
-    <label>剣の色</label><div id="bladeP" class="colors"></div>
-   </div>
-   <div>
-    <h3>🔴 RED PLAYER / CPU</h3>
-    <label>選手名</label><input id="nameC" maxlength="16" value="RED">
-    <label>マスクの色</label><div id="maskC" class="colors"></div>
-    <label>ユニフォームの色</label><div id="suitC" class="colors"></div>
-    <label>剣の色</label><div id="bladeC" class="colors"></div>
-   </div>
-  </div>
-  <h3>能力値（1〜10）</h3>
-  <p style="font-size:11px;color:#9db8d5">能力を上げると、その選手の操作や攻撃性能が変わります。</p>
-  <div id="stats"></div>
-  <div class="buttons">
-   <button onclick="resetCustomize()">初期設定に戻す</button>
-   <button onclick="saveCustomize()">保存</button>
-   <button class="wide" onclick="closeCustomize()">戻る</button>
-  </div>
- </div>
+<div id="status"><div id="statusBig"></div><div id="statusSmall"></div></div>
+<div id="introCard">
+<div class="introTag" id="introTag">BLUE FENCER</div>
+<div class="introName" id="introName">BLUE</div>
+<div class="introLine"></div>
+<div class="introRole" id="introRole">FENCER INTRODUCTION</div>
 </div>
 
-<div id="hud" class="hud hidden">
- <div class="team"><span id="nameHudP" class="name">🔵 BLUE</span><span id="ps" class="score">0</span></div>
- <div class="clock"><div id="timer" class="timer">3:00</div><div class="round">FINAL BOUT</div></div>
- <div class="team red"><span id="cs" class="score">0</span><span id="nameHudC" class="name">RED 🔴</span></div>
- <button class="menu" onclick="pauseMenu()">☰ MENU</button>
+<div class="topMenu" id="topMenu"><button onclick="openPause()">☰ MENU</button></div>
+<div class="controls" id="controls">
+<div class="controlSide">
+<button class="ctrl blue" id="back">◀<small>BACK</small></button>
+<button class="ctrl blue" id="forward">▶<small>FORWARD</small></button>
+<button class="ctrl attack" id="attack">ATTACK<small>HOLD / LUNGE</small></button>
+</div>
+<div class="controlSide" id="redControls">
+<button class="ctrl red" id="back2">◀<small>BACK</small></button>
+<button class="ctrl red" id="forward2">▶<small>FORWARD</small></button>
+<button class="ctrl attack" id="attack2">ATTACK<small>HOLD / LUNGE</small></button>
+</div>
 </div>
 
-<div id="controls" class="controls hidden">
- <div class="group">
-  <button class="ctrl" id="left">◀<span class="tiny">後退</span></button>
-  <button class="ctrl" id="right">▶<span class="tiny">前進</span></button>
-  <button class="attack" id="atk">ATTACK<div class="charge"><div id="ch1"></div></div></button>
- </div>
- <div id="g2" class="group">
-  <button class="ctrl" id="left2">◀<span class="tiny">後退</span></button>
-  <button class="ctrl" id="right2">▶<span class="tiny">前進</span></button>
-  <button class="attack" id="atk2">P2 ATTACK<div class="charge"><div id="ch2"></div></div></button>
- </div>
+<div class="overlay" id="pause">
+<div class="modal">
+<h2>PAUSED</h2>
+<div class="actions">
+<button class="primary" onclick="resumeGame()">RESUME</button>
+<button onclick="openCustomizeMatch('blue')">CUSTOMIZE BLUE</button>
+<button onclick="openCustomizeMatch('red')">CUSTOMIZE RED</button>
+<button onclick="goHome()">HOME</button>
+</div>
+</div>
 </div>
 
-<button id="ready" class="ready hidden" onclick="playBout()">ON GUARD<br><small>タップして PLAY</small></button>
-
-<div id="result" class="screen hidden">
- <div class="panel" style="text-align:center">
-  <div class="logo">BOUT OVER</div><h2 id="winner"></h2><p id="final"></p>
-  <div class="buttons">
-   <button onclick="start(two)">もう一度対戦</button>
-   <button onclick="home()">ホームに戻る</button>
-  </div>
- </div>
+<div class="overlay" id="result">
+<div class="modal">
+<h2 id="resultTitle">BOUT COMPLETE</h2>
+<div id="resultScore" style="font-size:42px;font-weight:1000;margin:20px">0 — 0</div>
+<p id="resultText">試合終了</p>
+<div class="actions">
+<button class="primary" onclick="startMatch(mode)">REMATCH</button>
+<button onclick="goHome()">HOME</button>
 </div>
-
-<div id="pause" class="screen hidden">
- <div class="panel" style="text-align:center">
-  <div class="logo" style="font-size:32px">PAUSED</div>
-  <div class="buttons">
-   <button class="wide" onclick="resumeBout()">試合に戻る</button>
-   <button onclick="showCustomize(true)">選手設定</button>
-   <button onclick="home()">ホームへ戻る</button>
-  </div>
- </div>
 </div>
+</div>
+</section>
 
 <script>
-'use strict';
-const cv=document.getElementById('cv'),ctx=cv.getContext('2d',{alpha:false});
+"use strict";
 const $=id=>document.getElementById(id);
-let W=0,H=0,D=1,run=false,two=false,phase='home',last=0,time=0,sp=0,sc=0;
-let boutLive=false,paused=false,raf=0,aiTimer=0,lights=[],bgCanvas=null,bgCtx=null;
-let keys={p:0,c:0},scoreColor='#168cff';
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const palettes=['#eef3f8','#39caff','#ff4c68','#17283c','#ffe28b','#58d68d','#bb86fc','#ff9f43','#ffffff','#222222'];
+const canvas=$("gameCanvas"),ctx=canvas.getContext("2d");
+const original={
+ blue:{name:"BLUE",mask:"#c8d1dc",suit:"#edf1f7",blade:"#d8e8ff",stats:{speed:3,power:3,reach:3,stamina:3,defense:3}},
+ red:{name:"RED",mask:"#c8d1dc",suit:"#edf1f7",blade:"#d8e8ff",stats:{speed:3,power:3,reach:3,stamina:3,defense:3}}
+};
+let settings=JSON.parse(JSON.stringify(original));
+let mode="cpu",editing="blue",returnMatch=false;
+let blue=null,red=null,running=false,live=false,paused=false;
+let W=0,H=0,dpr=1,last=0,remaining=180,raf=0,roundTimer=null;
+let keys={back:false,forward:false,attack:false,back2:false,forward2:false,attack2:false};
+let crowdFlash=0,crowdColor="#20baff",lights=[];
+let sequenceToken=0;
 
-const defaultConfig=()=>({
- nameP:'BLUE',nameC:'RED',
- maskP:'#9db0c3',maskC:'#9db0c3',
- suitP:'#eef3f8',suitC:'#eef3f8',
- bladeP:'#d8e7f5',bladeC:'#d8e7f5',
- speedP:7,speedC:6,attackP:7,attackC:6,
- reachP:7,reachC:6,defenseP:6,defenseC:6
-});
-let cfg=defaultConfig();
-
-function fighter(x,dir,color,side){
- const s=side==='p'?'P':'C';
- return {
-  x,dir,color,side,vx:0,step:0,lift:0,phase:Math.random()*6,
-  charge:0,charging:false,attack:0,attackTime:.18,reach:0,cool:0,
-  stamina:100,hit:false,aiMove:0,aiTimer:0,aiState:'guard',
-  mask:cfg['mask'+s],suit:cfg['suit'+s],blade:cfg['blade'+s],
-  speed:cfg['speed'+s],power:cfg['attack'+s],
-  reachStat:cfg['reach'+s],defense:cfg['defense'+s]
- };
+function showScreen(id){["home","customize","match"].forEach(s=>$(s).classList.toggle("active",s===id))}
+function hideOverlays(){["pause","result"].forEach(id=>$(id).classList.remove("show"))}
+function clearTimers(){clearTimeout(roundTimer);roundTimer=null;sequenceToken++}
+function clearKeys(){Object.keys(keys).forEach(k=>keys[k]=false);if(blue)blue.charging=false;if(red)red.charging=false}
+function goHome(){
+ running=false;live=false;paused=false;clearTimers();cancelAnimationFrame(raf);clearKeys();
+ hideOverlays();$("introCard").classList.remove("visible");canvas.classList.remove("zoom-blue","zoom-red");
+ showScreen("home");$("homeBlue").textContent=settings.blue.name;$("homeRed").textContent=settings.red.name+(mode==="cpu"?" / CPU":"");
 }
-
-let p,c;
-
-function resize(){
- D=Math.min(devicePixelRatio||1,1);
- W=innerWidth;H=innerHeight;
- cv.width=Math.round(W*D);cv.height=Math.round(H*D);
- ctx.setTransform(D,0,0,D,0,0);
- makeBackground();draw();
+function openCustomize(side){editing=side;returnMatch=false;loadCustomize();showScreen("customize")}
+function openCustomizeMatch(side){
+ editing=side;returnMatch=true;paused=true;live=false;clearTimers();clearKeys();$("pause").classList.remove("show");loadCustomize();showScreen("customize");
 }
-addEventListener('resize',resize);
-
-function makeBackground(){
- bgCanvas=document.createElement('canvas');
- bgCanvas.width=Math.max(1,Math.round(W*D));
- bgCanvas.height=Math.max(1,Math.round(H*D));
- bgCtx=bgCanvas.getContext('2d');
- bgCtx.setTransform(D,0,0,D,0,0);
- lights=[];
- const count=Math.min(150,Math.max(70,Math.floor(W*H/8500)));
- for(let i=0;i<count;i++){
-  lights.push({x:Math.random()*W,y:H*.19+Math.random()*H*.36,
-   hue:[190,205,225,275,305,345,355,45,125][i%9],
-   phase:Math.random()*6.28,size:1+Math.random()*1.1,flash:0});
- }
- drawStaticBackground();
-}
-
-function drawStaticBackground(){
- if(!bgCtx)return;
- const b=bgCtx;
- b.clearRect(0,0,W,H);
- const g=b.createLinearGradient(0,0,0,H);
- g.addColorStop(0,'#071326');g.addColorStop(.55,'#101f33');g.addColorStop(1,'#050c18');
- b.fillStyle=g;b.fillRect(0,0,W,H);
- b.strokeStyle='#20344d';b.lineWidth=1;
- for(let i=0;i<11;i++){
-  const x=i*W/10;b.beginPath();b.moveTo(x,0);
-  b.lineTo(W/2+(x-W/2)*.76,H*.18);b.stroke();
- }
- b.fillStyle='#e5f2ff';
- for(let i=0;i<15;i++){
-  b.beginPath();b.arc(i*W/14,H*.145,1.3,0,Math.PI*2);b.fill();
- }
- const stands=b.createLinearGradient(0,H*.17,0,H*.56);
- stands.addColorStop(0,'#101d30');stands.addColorStop(1,'#192a3d');
- b.fillStyle=stands;b.fillRect(0,H*.17,W,H*.39);
-
- // Static lights are drawn once; only the tiny light layer is animated.
- for(const l of lights){
-  b.globalAlpha=.65;b.fillStyle=`hsl(${l.hue},85%,42%)`;
-  b.fillRect(l.x,l.y,l.size,l.size*2.2);
- }
- b.globalAlpha=1;
-
- b.fillStyle='#08172a';b.fillRect(W*.405,H*.19,W*.19,H*.09);
- b.strokeStyle='#395b7c';b.strokeRect(W*.405,H*.19,W*.19,H*.09);
- b.textAlign='center';b.font=`bold ${Math.max(10,W*.013)}px Arial`;
- b.fillStyle='#d8e8f8';b.fillText('FENCING • WORLD ARENA',W*.5,H*.225);
- b.fillStyle='#6ccaff';b.fillText('BLUE',W*.455,H*.26);
- b.fillStyle='#ff6c80';b.fillText('RED',W*.545,H*.26);
-
- const y=H*.62,L=-W*.05,R=W*1.05,TL=W*.22,TR=W*.78;
- const leftAt=t=>L+(TL-L)*t,rightAt=t=>R+(TR-R)*t,yAt=t=>H+(y-H)*t;
- b.beginPath();b.moveTo(TL,y);b.lineTo(TR,y);b.lineTo(R,H);b.lineTo(L,H);b.closePath();
- const piste=b.createLinearGradient(0,y,0,H);
- piste.addColorStop(0,'#8b9dad');piste.addColorStop(.08,'#526a80');
- piste.addColorStop(.4,'#263d54');piste.addColorStop(1,'#142438');
- b.fillStyle=piste;b.fill();
- b.save();b.beginPath();b.moveTo(TL,y);b.lineTo(TR,y);b.lineTo(R,H);b.lineTo(L,H);b.closePath();b.clip();
- for(let i=1;i<17;i++){
-  const t=i/17;b.strokeStyle=i%3===0?'#d6e3ee30':'#d6e3ee0b';
-  b.beginPath();b.moveTo(leftAt(t),yAt(t));b.lineTo(rightAt(t),yAt(t));b.stroke();
- }
- b.restore();
- b.strokeStyle='#d5e1ed';b.lineWidth=2;
- b.beginPath();b.moveTo(TL,y);b.lineTo(L,H);b.moveTo(TR,y);b.lineTo(R,H);
- b.moveTo(TL,y);b.lineTo(TR,y);b.lineTo(R,H);b.lineTo(L,H);b.closePath();b.stroke();
- function line(t,color,width){
-  b.strokeStyle=color;b.lineWidth=width;b.beginPath();
-  b.moveTo(leftAt(t),yAt(t));b.lineTo(rightAt(t),yAt(t));b.stroke();
- }
- line(.78,'#e0e9f488',1.5);line(.44,'#f0f5facc',2);
- line(.27,'#ffcf6a',2.5);line(.13,'#e0e9f488',1.5);
- b.strokeStyle='#e0e9f488';b.lineWidth=1.5;
- b.beginPath();b.moveTo(W*.5,y);b.lineTo(W*.5,H);b.stroke();
-}
-
-function start(local){
-  two = local;
-  run = true;
-  phase = 'fight';
-  paused = false;
-  boutLive = false;
-  sp = 0;
-  sc = 0;
-  time = 0;
-  aiTimer = 0;
-  keys.p = 0;
-  keys.c = 0;
-
-  p = fighter(W * 0.36, 1, '#39caff', 'p');
-  c = fighter(W * 0.64, -1, '#ff4c68', 'c');
-
-  $('ps').textContent = '0';
-  $('cs').textContent = '0';
-  $('timer').textContent = '3:00';
-  updateNames();
-
-  $('home').classList.add('hidden');
-  $('custom').classList.add('hidden');
-  $('pause').classList.add('hidden');
-  $('result').classList.add('hidden');
-  $('hud').classList.remove('hidden');
-  $('controls').classList.remove('hidden');
-  $('ready').classList.remove('hidden');
-
-  $('ready').innerHTML = 'ON GUARD<br><small>タップして PLAY</small>';
-  $('g2').style.display = two ? 'flex' : 'none';
-
-  last = performance.now();
-  cancelAnimationFrame(raf);
-  rebindAttacks();
-  raf = requestAnimationFrame(loop);
-}
-function playBout(){
- if(!run||paused)return;
- boutLive=true;$('ready').classList.add('hidden');last=performance.now();
-}
-function home(){
- run=false;boutLive=false;paused=false;phase='home';keys.p=keys.c=0;
- $('home').classList.remove('hidden');$('hud').classList.add('hidden');
- $('controls').classList.add('hidden');$('result').classList.add('hidden');
- $('custom').classList.add('hidden');$('pause').classList.add('hidden');
- $('ready').classList.add('hidden');draw();
-}
-function pauseMenu(){
- if(!run)return;
- paused=true;boutLive=false;$('pause').classList.remove('hidden');
-}
-function resumeBout(){
- paused=false;$('pause').classList.add('hidden');
- $('ready').classList.remove('hidden');
- $('ready').innerHTML='ON GUARD<br><small>タップして PLAY</small>';
-}
-function updateNames(){
- $('nameHudP').textContent='🔵 '+(cfg.nameP||'BLUE');
- $('nameHudC').textContent=(cfg.nameC||'RED')+' 🔴';
-}
-
-function begin(f){
- if(!run||!boutLive||paused||f.cool>0||f.attack>0||f.charging||f.stamina<3)return;
- f.charging=true;f.charge=0;
-}
-function release(f){
- if(!f.charging||!run||!boutLive)return;
- f.charging=false;
- f.reach=clamp(f.charge/.35,0,1);
- f.attackTime=.15+f.reach*.035;
- f.attack=f.attackTime;f.hit=false;
- f.stamina=Math.max(0,f.stamina-3-f.reach*5);
- f.cool=.05;
-}
-function bindAttack(id,f){
- const el=$(id);
- el.addEventListener('pointerdown',e=>{
-  e.preventDefault();try{el.setPointerCapture(e.pointerId)}catch(_){}
-  begin(f);
- });
- ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>
-  el.addEventListener(ev,()=>release(f)));
-}
-function bindMove(id,side,value){
- const el=$(id);
- el.addEventListener('pointerdown',e=>{
-  e.preventDefault();try{el.setPointerCapture(e.pointerId)}catch(_){}
-  keys[side]=value;
- });
- ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>
-  el.addEventListener(ev,()=>{if(keys[side]===value)keys[side]=0}));
-}
-bindAttack('atk',()=>{}); // Replaced below with dynamic player binding.
-$('atk').replaceWith($('atk').cloneNode(true));
-$('atk2').replaceWith($('atk2').cloneNode(true));
-bindMove('left','p',-1);bindMove('right','p',1);
-bindMove('left2','c',1);bindMove('right2','c',-1);
-function rebindAttacks(){
- bindAttack('atk',p);bindAttack('atk2',c);
-}
-const oldStart=start;
-start=function(local){oldStart(local);rebindAttacks()};
-
-addEventListener('keydown',e=>{
- if(['ArrowLeft','ArrowRight','ArrowUp',' '].includes(e.key))e.preventDefault();
- if(e.key==='ArrowLeft')keys.p=-1;
- if(e.key==='ArrowRight')keys.p=1;
- if(e.key==='ArrowUp')begin(p);
- if(e.key.toLowerCase()==='a')keys.c=1;
- if(e.key.toLowerCase()==='d')keys.c=-1;
- if(e.key.toLowerCase()==='w')begin(c);
-},{passive:false});
-addEventListener('keyup',e=>{
- if(e.key==='ArrowLeft'||e.key==='ArrowRight')keys.p=0;
- if(e.key==='ArrowUp')release(p);
- if('ad'.includes(e.key.toLowerCase()))keys.c=0;
- if(e.key.toLowerCase()==='w')release(c);
-});
-
-function scorePoint(who){
- if(!run)return;
- if(who==='p'){sp++;scoreColor='#168cff';}
- else{sc++;scoreColor='#ff264c';}
- $('ps').textContent=sp;$('cs').textContent=sc;
- for(let i=0;i<lights.length;i++)if(i%2===0)lights[i].flash=.7;
- p.x=W*.36;c.x=W*.64;
- for(const f of [p,c]){
-  f.attack=0;f.charging=false;f.charge=0;f.cool=.25;f.hit=false;f.vx=0;
- }
- if(sp>=15||sc>=15)finish();
-}
-function finish(){
- run=false;phase='result';boutLive=false;
- $('winner').textContent=sp===sc?'DRAW':sp>sc?(cfg.nameP||'BLUE')+' WINS':(cfg.nameC||'RED')+' WINS';
- $('final').textContent=sp+' — '+sc;
- $('result').classList.remove('hidden');
-}
-
-function update(dt){
- if(!run||!boutLive||paused)return;
- time+=dt;if(time>=180){finish();return}
- for(const f of [p,c]){
-  f.cool=Math.max(0,f.cool-dt);
-  if(f.charging)f.charge=Math.min(.35,f.charge+dt);
-  if(f.attack>0)f.attack=Math.max(0,f.attack-dt);
-  f.stamina=Math.min(100,f.stamina+dt*20);
- }
- const gap=c.x-p.x;
- if(!two)thinkCPU(dt,gap);
- moveFencer(p,keys.p*speedOf(p)*60,dt);
- moveFencer(c,two?keys.c*speedOf(c)*60:c.aiMove*speedOf(c)*60,dt);
- p.x=clamp(p.x,W*.12,W*.48);c.x=clamp(c.x,W*.52,W*.88);
- if(c.x-p.x<50){
-  const m=(p.x+c.x)/2;p.x=m-25;c.x=m+25;
-  if(p.vx>0)p.vx=0;if(c.vx<0)c.vx=0;
- }
- for(const [a,b,who] of [[p,c,'p'],[c,p,'c']]){
-  if(a.attack>0&&!a.hit){
-   const progress=1-a.attack/a.attackTime;
-   const gapAhead=(b.x-a.x)*a.dir;
-   const range=75+a.reachStat*7+a.reach*125;
-   if(progress>.08&&progress<.92&&gapAhead>-8&&gapAhead<range){
-    a.hit=true;
-    if(Math.random()*10>b.defense*.28)scorePoint(who);
-   }
-  }
- }
- for(const l of lights)l.flash=Math.max(0,l.flash-dt*1.8);
- $('timer').textContent=Math.floor((180-time)/60)+':'+String(Math.floor((180-time)%60)).padStart(2,'0');
- $('ch1').style.width=(p.charge/.35*100)+'%';
- $('ch2').style.width=(c.charge/.35*100)+'%';
-}
-function speedOf(f){return 4.4+f.speed*.28}
-function thinkCPU(dt,gap){
- c.aiTimer-=dt;
- if(c.aiTimer<=0){
-  c.aiTimer=.10+Math.random()*.12;
-  const threat=p.charging||p.attack>0;
-  const ready=c.cool<=0&&c.attack<=0&&!c.charging;
-  if(threat&&gap<200)c.aiMove=gap<95?-1:(Math.random()<.35?1:0);
-  else if(gap>230)c.aiMove=1;
-  else if(gap>155)c.aiMove=Math.random()<.75?1:0;
-  else if(gap<85)c.aiMove=Math.random()<.65?-1:0;
-  else c.aiMove=Math.random()<.55?1:Math.random()<.7?0:-1;
-  if(ready&&gap<270&&gap>45){
-   let chance=gap<140?.75:gap<205?.5:.28;
-   if(threat)chance*=.6;
-   if(Math.random()<chance){
-    begin(c);c.charge=.08+Math.random()*.12;
-   }
-  }
- }
- if(c.charging){
-  c.aiMove=gap<95?-1:0;
-  if(c.charge>.12)release(c);
- }
- if(c.attack>0)c.aiMove=gap>95?1:0;
-}
-function moveFencer(f,target,dt){
- if(target!==0){
-  f.vx+=(target-f.vx)*Math.min(1,dt*25);
-  f.step+=dt*Math.abs(f.vx)/19;
- }else{
-  f.vx*=Math.max(0,1-dt*23);
-  if(Math.abs(f.vx)<5)f.vx=0;
- }
- f.x+=f.vx*dt;
- const stride=Math.max(0,Math.sin(f.step*3.2));
- f.lift+=(target!==0?stride*Math.min(3,Math.abs(f.vx)/120):0-f.lift)*Math.min(1,dt*14);
-}
-
-function drawLights(){
- const now=performance.now()*.001;
- for(const l of lights){
-  if(l.flash<=0)continue;
-  const pulse=.5+.5*Math.sin(now*8+l.phase);
-  ctx.globalAlpha=.35+pulse*.55;
-  ctx.fillStyle=scoreColor;
-  ctx.fillRect(l.x-1,l.y-1,l.size+2,l.size*2.4+2);
- }
- ctx.globalAlpha=1;
-}
-function limb(x1,y1,x2,y2,width,color){
- ctx.lineCap='round';ctx.strokeStyle='#101a28';ctx.lineWidth=width+2;
- ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
- ctx.strokeStyle=color;ctx.lineWidth=width;
- ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
-}
-function drawFencer(f){
- const floor=H*.62,active=f.attack>0;
- const progress=active?1-f.attack/f.attackTime:0;
- const lunge=active?Math.sin(progress*Math.PI)*Math.min(W*.055,48):0;
- const charge=f.charging?f.charge/.35:f.reach;
- ctx.save();ctx.translate(f.x+f.dir*lunge,floor-f.lift);ctx.scale(f.dir,1);
- const bob=Math.sin(performance.now()*.006+f.phase)*1.2;
- const stride=Math.sin(f.step*3.2)*Math.min(7,Math.abs(f.vx)/50);
- const front=active?59+progress*23:27+stride,back=-23-stride*.3;
- limb(-3,-51,back,-25,11,f.suit);
- limb(back,-25,back-10,-3,8,f.suit);
- limb(-1,-50,front,-27,12,f.suit);
- limb(front,-27,front+12,-3,8,f.suit);
- ctx.fillStyle='#0c1726';
- ctx.beginPath();ctx.ellipse(back-7,0,13,4,0,0,Math.PI*2);ctx.fill();
- ctx.beginPath();ctx.ellipse(front+14,0,13,4,0,0,Math.PI*2);ctx.fill();
-
- ctx.fillStyle=f.suit;
- ctx.beginPath();ctx.moveTo(-15,-108+bob);ctx.lineTo(13,-109+bob);
- ctx.lineTo(20,-75);ctx.lineTo(8,-49);ctx.lineTo(-13,-51);ctx.lineTo(-22,-77);
- ctx.closePath();ctx.fill();ctx.strokeStyle='#9eafc1';ctx.lineWidth=1;ctx.stroke();
- ctx.fillStyle=f.color;ctx.fillRect(-8,-102,15,5);
-
- ctx.fillStyle='#19283a';ctx.beginPath();ctx.ellipse(2,-126+bob,15,17,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle=f.mask;ctx.beginPath();ctx.ellipse(5,-126+bob,10,12,0,0,Math.PI*2);ctx.fill();
- ctx.strokeStyle='#2c425a';ctx.lineWidth=1;
- for(let i=-3;i<=11;i+=3){ctx.beginPath();ctx.moveTo(i,-136+bob);ctx.lineTo(i+3,-116+bob);ctx.stroke()}
-
- const armX=active?82:f.charging?39+charge*35:43,armY=active?-89:-82;
- limb(8,-100,23,-92,8,f.suit);limb(23,-92,armX,armY,7,f.suit);
- ctx.fillStyle='#15243a';ctx.beginPath();ctx.arc(armX,armY,5,0,Math.PI*2);ctx.fill();
- const blade=100+f.reachStat*4+charge*70;
- ctx.strokeStyle=f.blade;ctx.lineWidth=3;
- ctx.beginPath();ctx.moveTo(armX,armY);ctx.lineTo(armX+blade,armY-3);ctx.stroke();
- ctx.strokeStyle='#fff';ctx.lineWidth=1;
- ctx.beginPath();ctx.moveTo(armX,armY-1);ctx.lineTo(armX+blade,armY-4);ctx.stroke();
- if(f.charging){
-  ctx.strokeStyle='#ffe28b';ctx.lineWidth=2;
-  ctx.beginPath();ctx.arc(0,-126,20+charge*7,Math.PI,Math.PI*2);ctx.stroke();
- }
- ctx.restore();
- ctx.fillStyle='#0005';ctx.beginPath();ctx.ellipse(f.x,floor+5,34,6,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle='#15243a';ctx.fillRect(f.x-34,floor+11,68,4);
- ctx.fillStyle=f.color;ctx.fillRect(f.x-34,floor+11,68*f.stamina/100,4);
-}
-function draw(){
- if(!W||!H)return;
- ctx.drawImage(bgCanvas,0,0,W,H);
- drawLights();
- if(phase!=='home'&&p&&c){drawFencer(p);drawFencer(c)}
- if(phase==='fight'&&boutLive){
-  ctx.fillStyle='#d6e6f6';ctx.textAlign='center';ctx.font='bold 11px Arial';
-  ctx.fillText(two?'P1: ← → / ↑　P2: A D / W':'← → MOVE • HOLD ATTACK TO SET REACH',W/2,H*.38);
- }
-}
-function loop(now){
- if(!run)return;
- const dt=Math.min(.025,Math.max(0,(now-last)/1000));last=now;
- update(dt);draw();
- if(run)raf=requestAnimationFrame(loop);
-}
-
-/* Customize screen */
-const statDefs=[
- ['speedP','移動速度','speedC'],
- ['attackP','攻撃性能','attackC'],
- ['reachP','攻撃距離','reachC'],
- ['defenseP','防御性能','defenseC']
-];
-function showCustomize(fromPause=false){
- $('home').classList.add('hidden');
- if(fromPause)$('pause').classList.add('hidden');
- buildCustomize();
- $('custom').classList.remove('hidden');
-}
-function buildCustomize(){
- $('nameP').value=cfg.nameP;$('nameC').value=cfg.nameC;
- buildColors('maskP','maskP');buildColors('suitP','suitP');buildColors('bladeP','bladeP');
- buildColors('maskC','maskC');buildColors('suitC','suitC');buildColors('bladeC','bladeC');
- const root=$('stats');root.innerHTML='';
- for(const [key,label,keyC] of statDefs){
-  const row=document.createElement('div');row.className='row';
-  row.innerHTML=statControl(key,label)+statControl(keyC,label+' (RED/CPU)');
-  root.appendChild(row);
- }
-}
-function statControl(key,label){
- return `<div class="stat" style="grid-template-columns:1fr 30px;gap:5px"><label style="grid-column:1/-1;margin:0">${label}</label><input type="range" min="1" max="10" value="${cfg[key]}" id="${key}" oninput="document.getElementById('${key}out').value=this.value"><output id="${key}out">${cfg[key]}</output></div>`;
-}
-function buildColors(id,key){
- const el=$(id);el.innerHTML='';
- for(const color of palettes){
-  const b=document.createElement('button');
-  b.className='swatch'+(cfg[key]===color?' selected':'');
-  b.style.background=color;b.title=color;
-  b.onclick=()=>{
-   cfg[key]=color;
-   el.querySelectorAll('button').forEach(x=>x.classList.remove('selected'));
-   b.classList.add('selected');
+function loadCustomize(){
+ let s=settings[editing];$("fName").value=s.name;$("maskColor").value=s.mask;$("suitColor").value=s.suit;$("bladeColor").value=s.blade;
+ let box=$("stats");box.innerHTML="";
+ for(let [key,label] of [["speed","SPEED"],["power","POWER"],["reach","REACH"],["stamina","STAMINA"],["defense","DEFENSE"]]){
+  let row=document.createElement("div");row.className="stat";
+  let lab=document.createElement("span");lab.textContent=label;
+  let inp=document.createElement("input");inp.type="range";inp.min=1;inp.max=5;inp.value=s.stats[key];inp.dataset.key=key;
+  let out=document.createElement("output");out.textContent=inp.value;
+  inp.oninput=()=>{
+   let sliders=[...box.querySelectorAll("input")],excess=sliders.reduce((a,b)=>a+ +b.value,0)-15;
+   if(excess>0)for(let other of sliders){if(other===inp)continue;let take=Math.min(+other.value-1,excess);other.value-=take;other.parentElement.querySelector("output").textContent=other.value;excess-=take;if(excess<=0)break}
+   out.textContent=inp.value;
   };
-  el.appendChild(b);
+  row.append(lab,inp,out);box.append(row);
  }
 }
 function saveCustomize(){
- cfg.nameP=$('nameP').value.trim()||'BLUE';
- cfg.nameC=$('nameC').value.trim()||'RED';
- for(const [key] of statDefs)cfg[key]=Number($(key).value);
- for(const [, ,keyC] of statDefs)cfg[keyC]=Number($(keyC).value);
- updateNames();
- if(p&&c){
-  Object.assign(p,{mask:cfg.maskP,suit:cfg.suitP,blade:cfg.bladeP,speed:cfg.speedP,power:cfg.attackP,reachStat:cfg.reachP,defense:cfg.defenseP});
-  Object.assign(c,{mask:cfg.maskC,suit:cfg.suitC,blade:cfg.bladeC,speed:cfg.speedC,power:cfg.attackC,reachStat:cfg.reachC,defense:cfg.defenseC});
- }
- $('custom').classList.add('hidden');
- if(run){
-  if(paused)$('pause').classList.remove('hidden');
-  else if(!boutLive)$('ready').classList.remove('hidden');
- }else $('home').classList.remove('hidden');
- draw();
-}
-function resetCustomize(){
- cfg=defaultConfig();buildCustomize();
-}
-function closeCustomize(){
- $('custom').classList.add('hidden');
- if(run){
-  if(paused)$('pause').classList.remove('hidden');
-  else if(!boutLive)$('ready').classList.remove('hidden');
- }else $('home').classList.remove('hidden');
-}
-resize();
-// エンドライン越境を正しく判定
-// エンドライン越境による連続得点を防止
-let endLineScoring = false;
-
-function checkEndLines(){
-  if(!run || !boutLive || paused || endLineScoring) return;
-
-  const leftEnd = W * 0.10;
-  const rightEnd = W * 0.90;
-
-  const pFoot = p.x + (p.attack > 0 ? 52 : 34);
-  const cFoot = c.x - (c.attack > 0 ? 52 : 34);
-
-  let winner = null;
-
-  if(pFoot >= rightEnd){
-    winner = 'c';
-  } else if(cFoot <= leftEnd){
-    winner = 'p';
-  }
-
-  if(winner){
-    endLineScoring = true;
-    scorePoint(winner);
-    endLineScoring = false;
-  }
-}
-// エンドライン付近まで移動可能にする
-function moveFencer(f,target,dt){
-  const speed = speedOf(f);
-  f.x += target * speed * 60 * dt;
-
-  // エンドラインを越えられるよう、画面端だけで制限
-  f.x = Math.max(20, Math.min(W - 20, f.x));
-}
-function begin(f){
-    if(!run||!boutLive||paused||f.cool>0||f.attack>0||f.charging||f.stamina<3)return;
-    f.charging=true;
-    f.charge=0;
+ let s=settings[editing];s.name=$("fName").value.trim()||editing.toUpperCase();s.mask=$("maskColor").value;s.suit=$("suitColor").value;s.blade=$("bladeColor").value;s.stats={};
+ $("stats").querySelectorAll("input").forEach(x=>s.stats[x.dataset.key]=+x.value);
+ if(Object.values(s.stats).reduce((a,b)=>a+b,0)!==15){alert("能力値の合計を15にしてください");return}
+ $("homeBlue").textContent=settings.blue.name;$("homeRed").textContent=settings.red.name+(mode==="cpu"?" / CPU":"");
+ if(returnMatch){
+  returnMatch=false;showScreen("match");paused=false;
+  applySettings(blue,"blue");applySettings(red,"red");
+  $("blueName").textContent=blue.name;$("redName").textContent=red.name;
+  resetPositions();startIntroductions();
+ }else goHome();
 }
 
-function release(f){
-    if(!f||!f.charging||!run||!boutLive)return;
-
-    f.charging=false;
-
-    // 短押し＝ドゥミ・ファント、長押し＝ロング・ファント
-    f.attackType=f.charge>=0.22?'long':'demi';
-    f.reach=f.attackType==='long'?1:0;
-    f.attack=f.attackType==='long'?.30:.18;
-    f.attackTime=f.attack;
-    f.cool=f.attackType==='long'?.48:.28;
-    f.hit=false;
-    f.stamina=Math.max(0,f.stamina-(f.attackType==='long'?14:6));
+function resize(){
+ let r=canvas.getBoundingClientRect();W=Math.max(1,r.width);H=Math.max(1,r.height);dpr=Math.min(devicePixelRatio||1,1.6);
+ canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);createLights();
 }
-
-/* エンドラインを越えたら相手に1点 */
-function checkEndLines(){
-    if(!p||!c||!run)return;
-
-    const leftEnd=W*.10;
-    const rightEnd=W*.90;
-
-    // 前足の位置を判定。長いファントは前足がさらに前に出る
-    const pFoot=p.x+(p.attack>0&&p.attackType==='long'?72:42);
-    const cFoot=c.x-(c.attack>0&&c.attackType==='long'?72:42);
-
-    if(pFoot>=rightEnd){
-        scorePoint('c');
-        return;
-    }
-
-    if(cFoot<=leftEnd){
-        scorePoint('p');
-    }
+window.addEventListener("resize",resize);
+function createLights(){
+ lights=[];let count=Math.max(120,Math.floor(W/2.5));
+ for(let i=0;i<count;i++)lights.push({x:Math.random()*W,y:H*.13+Math.random()*H*.27,size:1+Math.random()*2,base:Math.random()});
 }
-
-/* ドゥミとロングで攻撃距離・踏み込みを変える */
-function drawFencer(f){
-    const floor=H*.76;
-    const active=f.attack>0;
-    const progress=active?1-f.attack/f.attackTime:0;
-    const long=active&&f.attackType==='long';
-
-    const maxLunge=long?Math.min(W*.085,76):Math.min(W*.032,27);
-    const lunge=active?Math.sin(progress*Math.PI)*maxLunge:0;
-
-    ctx.save();
-    ctx.translate(f.x+f.dir*lunge,floor-f.lift);
-    ctx.scale(f.dir,1);
-
-    const bob=Math.sin(performance.now()*.006+f.phase)*1.2;
-    const stride=Math.sin(f.step*3.2)*Math.min(7,Math.abs(f.vx)/50);
-
-    const front=active
-        ?(long?75+progress*13:48+progress*8)
-        :27+stride;
-
-    const back=-23-stride*.3;
-
-    limb(-3,-51,back,-25,11,f.suit);
-    limb(back,-25,back-10,-3,8,f.suit);
-    limb(-1,-50,front,-27,12,f.suit);
-    limb(front,-27,front+12,-3,8,f.suit);
-
-    ctx.fillStyle='#0c1726';
-    ctx.beginPath();
-    ctx.ellipse(back-7,0,13,4,0,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.ellipse(front+14,0,13,4,0,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle=f.suit;
-    ctx.beginPath();
-    ctx.moveTo(-15,-108+bob);
-    ctx.lineTo(13,-109+bob);
-    ctx.lineTo(20,-75);
-    ctx.lineTo(8,-49);
-    ctx.lineTo(-13,-51);
-    ctx.lineTo(-22,-77);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.strokeStyle='#9eafc1';
-    ctx.lineWidth=1;
-    ctx.stroke();
-
-    ctx.fillStyle=f.color;
-    ctx.fillRect(-8,-102,15,5);
-
-    ctx.fillStyle='#19283a';
-    ctx.beginPath();
-    ctx.ellipse(2,-126+bob,15,17,0,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle=f.mask;
-    ctx.beginPath();
-    ctx.ellipse(5,-126+bob,10,12,0,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.strokeStyle='#2c425a';
-    ctx.lineWidth=1;
-    for(let i=-3;i<=11;i+=3){
-        ctx.beginPath();
-        ctx.moveTo(i,-136+bob);
-        ctx.lineTo(i+3,-116+bob);
-        ctx.stroke();
-    }
-
-    // ロングは腕を大きく伸ばす。剣そのものの長さは変えない
-    const armX=active?(long?104:64):f.charging?39+f.charge/.35*20:43;
-    const armY=active?(long?-89:-84):-82;
-
-    limb(8,-100,23,-92,8,f.suit);
-    limb(23,-92,armX,armY,7,f.suit);
-
-    ctx.fillStyle='#15243a';
-    ctx.beginPath();
-    ctx.arc(armX,armY,5,0,Math.PI*2);
-    ctx.fill();
-
-    // 剣の長さは固定
-    const bladeLength=112;
-    ctx.strokeStyle=f.blade;
-    ctx.lineWidth=3;
-    ctx.beginPath();
-    ctx.moveTo(armX,armY);
-    ctx.lineTo(armX+bladeLength,armY-3);
-    ctx.stroke();
-
-    ctx.strokeStyle='#fff';
-    ctx.lineWidth=1;
-    ctx.beginPath();
-    ctx.moveTo(armX,armY-1);
-    ctx.lineTo(armX+bladeLength,armY-4);
-    ctx.stroke();
-
-    if(f.charging){
-        ctx.strokeStyle='#ffe28b';
-        ctx.lineWidth=2;
-        ctx.beginPath();
-        ctx.arc(0,-126,20+f.charge/.35*7,Math.PI,Math.PI*2);
-        ctx.stroke();
-    }
-
-    if(active){
-        ctx.fillStyle=long?'#ffe28b':'#72d7ff';
-        ctx.font='bold 10px Arial';
-        ctx.textAlign='center';
-        ctx.fillText(long?'LONG FENTE':'DEMI-FENTE',0,-157);
-    }
-
-    ctx.restore();
-
-    ctx.fillStyle='#0006';
-    ctx.beginPath();
-    ctx.ellipse(f.x,floor+5,34,6,0,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle='#15243a';
-    ctx.fillRect(f.x-34,floor+11,68,4);
-
-    ctx.fillStyle=f.color;
-    ctx.fillRect(f.x-34,floor+11,68*f.stamina/100,4);
+function fencer(side,x){
+ return {side,x,dir:side==="blue"?1:-1,name:"",mask:"#c8d1dc",suit:"#edf1f7",blade:"#d8e8ff",
+ stats:{speed:3,power:3,reach:3,stamina:3,defense:3},stamina:85,maxStamina:85,attack:0,cooldown:0,
+ charging:false,charge:0,chargeStart:0,step:0,aiMove:0,flash:0,attackDuration:.3};
 }
-
-/* ピストのライン・得点判定を追加 */
-function draw(){
-    if(!W||!H)return;
-
-    const g=ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,'#071326');
-    g.addColorStop(.55,'#101f33');
-    g.addColorStop(1,'#050c18');
-    ctx.fillStyle=g;
-    ctx.fillRect(0,0,W,H);
-
-    ctx.strokeStyle='#20344d';
-    ctx.lineWidth=1;
-    for(let i=0;i<11;i++){
-        const x=i*W/10;
-        ctx.beginPath();
-        ctx.moveTo(x,0);
-        ctx.lineTo(W/2+(x-W/2)*.76,H*.2);
-        ctx.stroke();
-    }
-
-    ctx.fillStyle='#101d30';
-    ctx.fillRect(0,H*.18,W,H*.35);
-
-    const now=performance.now()*.001;
-
-    for(const l of lights){
-        ctx.globalAlpha=.6;
-        ctx.fillStyle=`hsl(${l.hue},85%,42%)`;
-        ctx.fillRect(l.x,l.y,l.size,l.size*2);
-
-        if(l.flash>0){
-            ctx.globalAlpha=.45+.45*Math.sin(now*8+l.phase);
-            ctx.fillStyle=scoreColor;
-            ctx.fillRect(l.x-1,l.y-1,l.size+2,l.size*2.4+2);
-        }
-    }
-
-    ctx.globalAlpha=1;
-
-    const top=H*.65;
-    const bottom=H*.93;
-    const piste=ctx.createLinearGradient(0,top,0,bottom);
-    piste.addColorStop(0,'#8b9dad');
-    piste.addColorStop(.08,'#526a80');
-    piste.addColorStop(.45,'#263d54');
-    piste.addColorStop(1,'#142438');
-
-    ctx.fillStyle=piste;
-    ctx.fillRect(0,top,W,bottom-top);
-
-    // ピストの外枠
-    ctx.strokeStyle='#d5e1ed';
-    ctx.lineWidth=2;
-    ctx.strokeRect(1,top,W-2,bottom-top);
-
-    // ライン位置
-    const leftEnd=W*.10;
-    const rightEnd=W*.90;
-    const leftWarning=W*.18;
-    const rightWarning=W*.82;
-    const leftStart=W*.42;
-    const rightStart=W*.58;
-    const center=W*.50;
-
-    // エンドライン
-    ctx.strokeStyle='#ff5d68';
-    ctx.lineWidth=4;
-    for(const x of [leftEnd,rightEnd]){
-        ctx.beginPath();
-        ctx.moveTo(x,top);
-        ctx.lineTo(x,bottom);
-        ctx.stroke();
-    }
-
-    // 警告ライン
-    ctx.strokeStyle='#ffcc65';
-    ctx.lineWidth=2;
-    for(const x of [leftWarning,rightWarning]){
-        ctx.beginPath();
-        ctx.moveTo(x,top);
-        ctx.lineTo(x,bottom);
-        ctx.stroke();
-    }
-
-    // 開始線
-    ctx.strokeStyle='#f4f7fb';
-    ctx.lineWidth=2;
-    for(const x of [leftStart,rightStart]){
-        ctx.beginPath();
-        ctx.moveTo(x,top);
-        ctx.lineTo(x,bottom);
-        ctx.stroke();
-    }
-
-    // 中央線
-    ctx.strokeStyle='#fff';
-    ctx.lineWidth=3;
-    ctx.beginPath();
-    ctx.moveTo(center,top);
-    ctx.lineTo(center,bottom);
-    ctx.stroke();
-
-    ctx.textAlign='center';
-    ctx.font='bold 11px Arial';
-
-    ctx.fillStyle='#ff9ba4';
-    ctx.fillText('END LINE',leftEnd,top-5);
-    ctx.fillText('END LINE',rightEnd,top-5);
-
-    ctx.fillStyle='#ffe09b';
-    ctx.fillText('WARNING',leftWarning,top-5);
-    ctx.fillText('WARNING',rightWarning,top-5);
-
-    ctx.fillStyle='#f4f7fb';
-    ctx.fillText('EN GARDE',leftStart,top-5);
-    ctx.fillText('EN GARDE',rightStart,top-5);
-
-    ctx.fillStyle='#fff';
-    ctx.fillText('CENTER',center,top-5);
-
-    // 背景の大会表示
-    ctx.fillStyle='#08172a';
-    ctx.fillRect(W*.405,H*.19,W*.19,H*.09);
-
-    ctx.strokeStyle='#395b7c';
-    ctx.strokeRect(W*.405,H*.19,W*.19,H*.09);
-
-    ctx.font=`bold ${Math.max(10,W*.013)}px Arial`;
-    ctx.fillStyle='#d8e8f8';
-    ctx.fillText('FENCING • WORLD ARENA',W*.5,H*.225);
-
-    ctx.fillStyle='#6ccaff';
-    ctx.fillText('BLUE',W*.455,H*.26);
-
-    ctx.fillStyle='#ff6c80';
-    ctx.fillText('RED',W*.545,H*.26);
-
-    if(phase!=='home'&&p&&c){
-        drawFencer(p);
-        drawFencer(c);
-    }
-
-    if(phase==='fight'&&boutLive){
-        ctx.fillStyle='#d6e6f6';
-        ctx.font='bold 11px Arial';
-        ctx.fillText(
-            two?'P1: ← →　P2: A D':'MOVE • TAP ATTACK = DEMI / HOLD = LONG FENTE',
-            W/2,H*.38
-        );
-    }
+function applySettings(f,side){
+ let s=settings[side];f.name=s.name;f.mask=s.mask;f.suit=s.suit;f.blade=s.blade;f.stats=JSON.parse(JSON.stringify(s.stats));
+ f.maxStamina=60+s.stats.stamina*8;f.stamina=f.maxStamina;
 }
-
-/* 既存update関数を上書き */
+function startMatch(m){
+ mode=m;clearTimers();showScreen("match");hideOverlays();resize();clearKeys();
+ blue=fencer("blue",W*.36);red=fencer("red",W*.64);applySettings(blue,"blue");applySettings(red,"red");
+ $("redControls").classList.toggle("hidden",mode==="cpu");
+ $("blueName").textContent=blue.name;$("redName").textContent=red.name;
+ $("blueScore").textContent=0;$("redScore").textContent=0;remaining=180;updateClock();
+ running=true;live=false;paused=false;last=performance.now();cancelAnimationFrame(raf);
+ $("status").style.display="none";$("introCard").classList.remove("visible");
+ raf=requestAnimationFrame(loop);startIntroductions();
+}
+function startIntroductions(){
+ clearTimers();live=false;paused=false;clearKeys();
+ $("status").style.display="none";$("introCard").classList.remove("visible");
+ $("hud").style.opacity="0";$("controls").style.opacity="0";$("topMenu").style.opacity="0";
+ canvas.classList.remove("zoom-blue","zoom-red");
+ const token=++sequenceToken;
+ // まずBLUE選手をアップで3秒紹介
+ showIntro(blue,"blue");
+ canvas.classList.add("zoom-blue");
+ roundTimer=setTimeout(()=>{
+  if(!running||paused||token!==sequenceToken)return;
+  // 続いてRED選手をアップで3秒紹介
+  showIntro(red,"red");
+  canvas.classList.remove("zoom-blue");canvas.classList.add("zoom-red");
+  roundTimer=setTimeout(()=>{
+   if(!running||paused||token!==sequenceToken)return;
+   $("introCard").classList.remove("visible");
+   canvas.classList.remove("zoom-red");
+   $("hud").style.opacity="1";$("controls").style.opacity="1";$("topMenu").style.opacity="1";
+   readySequence(token);
+  },3000);
+ },3000);
+}
+function showIntro(f,side){
+ let card=$("introCard");
+ card.classList.toggle("red",side==="red");
+ $("introTag").textContent=side==="blue"?"BLUE FENCER":(mode==="cpu"?"CPU FENCER":"RED FENCER");
+ $("introName").textContent=f.name;
+ $("introRole").textContent="FENCING ELITE · ATHLETE INTRODUCTION";
+ card.classList.add("visible");
+}
+function readySequence(token=sequenceToken){
+ live=false;$("status").style.display="block";$("statusBig").style.color="white";$("statusBig").textContent="EN GARDE";$("statusSmall").textContent="構えてください";
+ roundTimer=setTimeout(()=>{
+  if(!running||paused||token!==sequenceToken)return;
+  $("statusBig").textContent="PRÊTS?";$("statusSmall").textContent="";
+  roundTimer=setTimeout(()=>{
+   if(!running||paused||token!==sequenceToken)return;
+   $("statusBig").textContent="ALLEZ!";
+   roundTimer=setTimeout(()=>{
+    if(!running||paused||token!==sequenceToken)return;
+    live=true;$("status").style.display="none";
+   },400);
+  },600);
+ },600);
+}
+function resumeGame(){
+ $("pause").classList.remove("show");$("customize").classList.remove("active");$("match").classList.add("active");
+ clearTimers();paused=false;clearKeys();$("hud").style.opacity="1";$("controls").style.opacity="1";$("topMenu").style.opacity="1";readySequence();
+}
+function openPause(){
+ if(!running)return;paused=true;live=false;clearTimers();clearKeys();$("pause").classList.add("show");
+}
+function updateClock(){
+ let m=Math.floor(remaining/60),s=Math.floor(remaining%60);
+ $("clock").textContent=String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+}
+function loop(now){
+ if(!running)return;let dt=Math.min(.025,Math.max(0,(now-last)/1000||0));last=now;
+ if(live&&!paused)update(dt);draw();raf=requestAnimationFrame(loop);
+}
+function piste(){return {left:W*.07,right:W*.93,center:W*.5,y:H*.69}}
 function update(dt){
-    if(!run||!boutLive||paused)return;
-
-    time+=dt;
-    if(time>=180){
-        finish();
-        return;
-    }
-
-    for(const f of [p,c]){
-        f.cool=Math.max(0,f.cool-dt);
-
-        if(f.charging){
-            f.charge=Math.min(.35,f.charge+dt);
-        }
-
-        if(f.attack>0){
-            f.attack=Math.max(0,f.attack-dt);
-        }
-
-        f.stamina=Math.min(100,f.stamina+dt*20);
-    }
-
-    const gap=Math.abs(c.x-p.x);
-
-    if(!two)thinkCPU(dt,gap);
-
-    moveFencer(p,keys.p*speedOf(p)*60,dt);
-    moveFencer(c,two?keys.c*speedOf(c)*60:c.aiMove*speedOf(c)*60,dt);
-
-    // 前足がエンドラインを越えたら得点
-    checkEndLines();
-
-    if(!run)return;
-
-    // 選手がピストの外へ飛び出さないよう制限
-    const minX=W*.10;
-    const maxX=W*.90;
-
-    p.x=clamp(p.x,minX,maxX);
-    c.x=clamp(c.x,minX,maxX);
-
-    // 選手同士が重ならないようにする
-    if(Math.abs(c.x-p.x)<30){
-        const mid=(p.x+c.x)/2;
-
-        if(p.x<c.x){
-            p.x=clamp(mid-15,minX,maxX);
-            c.x=clamp(mid+15,minX,maxX);
-        }else{
-            c.x=clamp(mid-15,minX,maxX);
-            p.x=clamp(mid+15,minX,maxX);
-        }
-
-        p.vx=0;
-        c.vx=0;
-    }
-
-    // 攻撃判定：剣の長さではなく、踏み込みと攻撃タイプで距離を変える
-    for(const [a,b,who] of [[p,c,'p'],[c,p,'c']]){
-        if(a.attack>0&&!a.hit){
-            const progress=1-a.attack/a.attackTime;
-            const gapAhead=(b.x-a.x)*a.dir;
-
-            const long=a.attackType==='long';
-            const range=long
-                ?145+a.reachStat*4
-                :82+a.reachStat*3;
-
-            if(
-                progress>.08&&
-                progress<.92&&
-                gapAhead>-8&&
-                gapAhead<range
-            ){
-                a.hit=true;
-
-                if(Math.random()*10>b.defense*.28){
-                    scorePoint(who);
-                }
-            }
-        }
-    }
-
-    for(const l of lights){
-        l.flash=Math.max(0,l.flash-dt*1.8);
-    }
-
-    $('timer').textContent=
-        Math.floor((180-time)/60)+':'+
-        String(Math.floor((180-time)%60)).padStart(2,'0');
-
-    $('ch1').style.width=(p.charge/.35*100)+'%';
-    $('ch2').style.width=(c.charge/.35*100)+'%';
+ remaining=Math.max(0,remaining-dt);updateClock();if(remaining<=0){finishBout("time");return}
+ for(let f of [blue,red]){f.attack=Math.max(0,f.attack-dt);f.cooldown=Math.max(0,f.cooldown-dt);f.flash=Math.max(0,f.flash-dt);f.stamina=Math.min(f.maxStamina,f.stamina+dt*5)}
+ if(mode==="cpu")thinkCPU(dt);
+ move(blue,keys.forward?1:keys.back?-1:0,dt);
+ if(mode==="2p")move(red,keys.forward2?1:keys.back2?-1:0,dt);else move(red,red.aiMove,dt);
+ if(keys.attack)charge(blue);if(mode==="2p"&&keys.attack2)charge(red);
+ // 衝突判定。攻撃中も相手を通り抜けない
+ const minGap=62;
+ if(red.x-blue.x<minGap){
+  const mid=(blue.x+red.x)/2;blue.x=mid-minGap/2;red.x=mid+minGap/2;
+  const p=piste();blue.x=Math.max(p.left+2,blue.x);red.x=Math.min(p.right-2,red.x);
+  if(red.x-blue.x<minGap){
+   if(blue.x<=p.left+2)red.x=Math.min(p.right-2,blue.x+minGap);
+   else if(red.x>=p.right-2)blue.x=Math.max(p.left+2,red.x-minGap);
+  }
+ }
+ let p=piste();
+ if(blue.x<p.left+7){scorePoint("red","END OF PISTE");return}
+ if(red.x>p.right-7){scorePoint("blue","END OF PISTE");return}
+ hitCheck();if(crowdFlash>0)crowdFlash=Math.max(0,crowdFlash-dt);
 }
+function move(f,d,dt){
+ let speed=82+f.stats.speed*22;f.x+=d*speed*dt;f.step+=Math.abs(d)*dt*9;
+ if(f.attack>0){
+  let progress=1-f.attack/f.attackDuration;
+  let lunge=Math.sin(Math.min(1,progress)*Math.PI)*(28+f.charge*46);
+  f.x+=f.dir*lunge*dt*5;
+ }
+ let p=piste();f.x=Math.max(p.left+2,Math.min(p.right-2,f.x));
+}
+function thinkCPU(dt){
+ let gap=red.x-blue.x;red.aiMove=0;
+ if(gap>185)red.aiMove=-1;else if(gap<90&&Math.random()<.025)red.aiMove=1;
+ if(red.cooldown<=0&&gap<205&&Math.random()<dt*(gap<145?1.8:.7)){
+  red.charge=.35+Math.random()*.5;attackNow(red,red.charge);
+ }
+}
+function charge(f){if(!f.charging){f.charging=true;f.chargeStart=performance.now()}f.charge=Math.min(1,(performance.now()-f.chargeStart)/700)}
+function release(f){if(!f.charging)return;let q=Math.max(.18,f.charge);f.charging=false;f.charge=0;attackNow(f,q)}
+function attackNow(f,q){
+ if(!live||f.cooldown>0||f.stamina<8)return;
+ f.charge=q;f.attackDuration=.24+q*.12;f.attack=f.attackDuration;f.cooldown=.42;f.stamina-=10+q*13;f.flash=.08;
+}
+function hitCheck(){
+ let gap=red.x-blue.x,candidates=[];
+ for(let f of [blue,red]){
+  if(f.attack<=0)continue;
+  let other=f===blue?red:blue,forward=(other.x-f.x)*f.dir;
+  let reach=92+f.stats.reach*14+(f.charge||0)*36;
+  if(forward>0&&forward<reach&&gap<reach)candidates.push({f,forward});
+ }
+ if(candidates.length){candidates.sort((a,b)=>a.forward-b.forward);scorePoint(candidates[0].f.side,"TOUCHÉ")}
+}
+function scorePoint(side,reason){
+ if(!live)return;live=false;clearKeys();clearTimeout(roundTimer);
+ let id=side==="blue"?"blueScore":"redScore";$(id).textContent=+$(id).textContent+1;
+ crowdFlash=1;crowdColor=side==="blue"?"#20baff":"#ff4c65";
+ $("status").style.display="block";$("statusBig").textContent=reason;$("statusBig").style.color=crowdColor;
+ $("statusSmall").textContent=(side==="blue"?blue.name:red.name)+" +1";
+ if(+$("blueScore").textContent>=15||+$("redScore").textContent>=15){roundTimer=setTimeout(()=>finishBout("score"),1200);return}
+ // 得点後はボタンを押さず自動再開
+ roundTimer=setTimeout(()=>{
+  if(!running||paused)return;resetPositions();
+  $("statusBig").style.color="white";$("statusBig").textContent="EN GARDE";$("statusSmall").textContent="";
+  roundTimer=setTimeout(()=>{
+   if(!running||paused)return;$("statusBig").textContent="PRÊTS?";
+   roundTimer=setTimeout(()=>{
+    if(!running||paused)return;$("statusBig").textContent="ALLEZ!";
+    roundTimer=setTimeout(()=>{if(!running||paused)return;live=true;$("status").style.display="none"},400);
+   },600);
+  },600);
+ },950);
+}
+function resetPositions(){
+ let p=piste();blue.x=p.left+(p.right-p.left)*.31;red.x=p.left+(p.right-p.left)*.69;
+ for(let f of [blue,red]){f.attack=0;f.cooldown=.25;f.charge=0;f.charging=false;f.stamina=Math.min(f.maxStamina,f.stamina+18)}
+}
+function finishBout(reason){
+ live=false;paused=true;clearTimers();
+ let b=+$("blueScore").textContent,r=+$("redScore").textContent;
+ $("resultTitle").textContent=b===r?"MATCH DRAW":(b>r?blue.name:red.name)+" WINS";
+ $("resultScore").textContent=b+" — "+r;$("resultText").textContent=reason==="time"?"時間切れです。":"試合終了です。";
+ $("result").classList.add("show");
+}
+function bind(id,down,up){
+ let el=$(id);
+ el.addEventListener("pointerdown",e=>{e.preventDefault();try{el.setPointerCapture(e.pointerId)}catch(_){}down()});
+ for(let ev of ["pointerup","pointercancel","lostpointercapture"])el.addEventListener(ev,e=>{e.preventDefault();up()});
+}
+bind("back",()=>keys.back=true,()=>keys.back=false);
+bind("forward",()=>keys.forward=true,()=>keys.forward=false);
+bind("attack",()=>keys.attack=true,()=>{keys.attack=false;if(blue)release(blue)});
+bind("back2",()=>keys.back2=true,()=>keys.back2=false);
+bind("forward2",()=>keys.forward2=true,()=>keys.forward2=false);
+bind("attack2",()=>keys.attack2=true,()=>{keys.attack2=false;if(red)release(red)});
+window.addEventListener("keydown",e=>{
+ if(e.repeat)return;if(e.code==="Escape"){openPause();return}
+ if(e.code==="ArrowLeft"||e.code==="KeyA")keys.back=true;
+ if(e.code==="ArrowRight"||e.code==="KeyD")keys.forward=true;
+ if(e.code==="Space"||e.code==="KeyF")keys.attack=true;
+ if(mode==="2p"){if(e.code==="KeyJ")keys.back2=true;if(e.code==="KeyL")keys.forward2=true;if(e.code==="KeyK")keys.attack2=true}
+});
+window.addEventListener("keyup",e=>{
+ if(e.code==="ArrowLeft"||e.code==="KeyA")keys.back=false;
+ if(e.code==="ArrowRight"||e.code==="KeyD")keys.forward=false;
+ if(e.code==="Space"||e.code==="KeyF"){keys.attack=false;if(blue)release(blue)}
+ if(e.code==="KeyJ")keys.back2=false;if(e.code==="KeyL")keys.forward2=false;
+ if(e.code==="KeyK"){keys.attack2=false;if(red)release(red)}
+});
+window.addEventListener("blur",clearKeys);
 
-/* 既存scorePointを上書き：得点後は選手を開始位置へ戻す */
-function scorePoint(who){
-    if(!run)return;
-
-    if(who==='p'){
-        sp++;
-        scoreColor='#168cff';
-    }else{
-        sc++;
-        scoreColor='#ff264c';
-    }
-
-    $('ps').textContent=sp;
-    $('cs').textContent=sc;
-
-    for(let i=0;i<lights.length;i++){
-        if(i%2===0)lights[i].flash=.7;
-    }
-
-    p.x=W*.28;
-    c.x=W*.72;
-
-    for(const f of [p,c]){
-        f.attack=0;
-        f.charging=false;
-        f.charge=0;
-        f.cool=.3;
-        f.hit=false;
-        f.vx=0;
-        f.attackType='demi';
-    }
-
-    if(sp>=15||sc>=15)finish();
+function draw(){
+ if(!W||!H)return;ctx.setTransform(dpr,0,0,dpr,0,0);
+ let bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#0b1321");bg.addColorStop(.6,"#172236");bg.addColorStop(1,"#080e18");
+ ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);drawStadium();drawPiste();if(blue&&red){drawFencer(blue);drawFencer(red)}
+}
+function drawStadium(){
+ for(let row=0;row<5;row++){let y=H*.13+row*H*.052;ctx.fillStyle=row%2?"#172338":"#101b2d";ctx.fillRect(0,y,W,H*.048)}
+ for(let i=0;i<lights.length;i++){
+  let l=lights[i],col=crowdFlash>0?crowdColor:l.base<.3?"#20baff":l.base<.6?"#ff4c65":["#d7e7ff","#f3ce83","#8eabd0"][i%3];
+  ctx.globalAlpha=crowdFlash>0?.95:.34+Math.sin(performance.now()*.002+i)*.18;
+  ctx.fillStyle=col;ctx.shadowColor=col;ctx.shadowBlur=crowdFlash>0?12:4;ctx.fillRect(l.x,l.y,l.size,l.size*1.8);
+ }
+ ctx.globalAlpha=1;ctx.shadowBlur=0;
+ for(let x of [W*.12,W*.36,W*.64,W*.88]){
+  let g=ctx.createRadialGradient(x,H*.08,0,x,H*.08,W*.15);g.addColorStop(0,"#a8d9ff20");g.addColorStop(1,"#a8d9ff00");ctx.fillStyle=g;ctx.fillRect(x-W*.15,0,W*.3,H*.35);
+ }
+}
+function drawPiste(){
+ let p=piste(),x=p.left,w=p.right-p.left,h=Math.min(H*.24,155),top=p.y-h*.42;
+ ctx.fillStyle="#030812";ctx.fillRect(x+4,top+7,w,h);
+ let metal=ctx.createLinearGradient(0,top,0,top+h);metal.addColorStop(0,"#e4e9ef");metal.addColorStop(.25,"#b7c3d0");metal.addColorStop(.65,"#d1d9e2");metal.addColorStop(1,"#8999aa");
+ ctx.fillStyle=metal;ctx.fillRect(x,top,w,h);
+ ctx.strokeStyle="#8998a8";ctx.lineWidth=1;
+ for(let i=1;i<6;i++){let yy=top+h*i/6;ctx.beginPath();ctx.moveTo(x,yy);ctx.lineTo(x+w,yy);ctx.stroke()}
+ ctx.strokeStyle="#f7fbff";ctx.lineWidth=2;ctx.strokeRect(x,top,w,h);
+ ctx.strokeStyle="#283a50";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,top+h);ctx.moveTo(x+w,top);ctx.lineTo(x+w,top+h);ctx.stroke();
+ ctx.strokeStyle="#f9fbff";ctx.lineWidth=2;
+ for(let xx of [x+w*.32,x+w*.68,p.center]){ctx.beginPath();ctx.moveTo(xx,top);ctx.lineTo(xx,top+h);ctx.stroke()}
+ ctx.fillStyle="#f8fbff";ctx.font="bold 10px Arial";ctx.textAlign="center";
+ ctx.fillText("END",x,top-7);ctx.fillText("START",x+w*.32,top-7);ctx.fillText("CENTER",p.center,top-7);ctx.fillText("START",x+w*.68,top-7);ctx.fillText("END",x+w,top-7);
+ ctx.fillStyle="#080f1a";ctx.fillRect(0,top+h,W,H-top-h);
+}
+function drawFencer(f){
+ const p=piste(),ground=p.y+p.y*.02,sc=Math.max(.72,Math.min(1.12,H/700)),dir=f.dir,attacking=f.attack>0;
+ const progress=attacking?1-f.attack/f.attackDuration:0;
+ const extension=attacking?Math.sin(Math.min(1,progress)*Math.PI)*(25+f.charge*25):0;
+ const x=f.x,y=ground;ctx.save();ctx.translate(x,y);ctx.scale(sc,sc);
+ ctx.fillStyle="#03070c66";ctx.beginPath();ctx.ellipse(0,3,28,6,0,0,Math.PI*2);ctx.fill();
+ let step=Math.sin(f.step)*2,front=dir*(attacking?39:10),back=-dir*(attacking?37:10);
+ ctx.lineCap="round";ctx.lineWidth=9;ctx.strokeStyle="#17202d";
+ if(attacking){
+  ctx.beginPath();ctx.moveTo(-dir*2,-31);ctx.lineTo(back,-8);ctx.lineTo(back-dir*12,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(dir*2,-31);ctx.lineTo(dir*25,-17);ctx.lineTo(front+dir*7,0);ctx.stroke();
+ }else{
+  ctx.beginPath();ctx.moveTo(-dir*2,-31);ctx.lineTo(back+step,-4);ctx.lineTo(back-dir*8,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(dir*2,-31);ctx.lineTo(front-step,-4);ctx.lineTo(front+dir*8,0);ctx.stroke();
+ }
+ ctx.strokeStyle="#dfe6ef";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(back-dir*12,0);ctx.lineTo(back-dir*19,0);ctx.moveTo(front+dir*7,0);ctx.lineTo(front+dir*16,0);ctx.stroke();
+ ctx.save();ctx.translate(0,-45);ctx.rotate(-dir*(attacking?.13:0));ctx.translate(0,45);
+ ctx.fillStyle=f.flash>0?"white":f.suit;ctx.beginPath();ctx.moveTo(-9,-64);ctx.lineTo(9,-64);ctx.lineTo(12,-34);ctx.lineTo(8,-28);ctx.lineTo(-8,-28);ctx.lineTo(-12,-34);ctx.closePath();ctx.fill();
+ ctx.strokeStyle="#8593a5";ctx.lineWidth=1;ctx.stroke();ctx.strokeStyle="#8998a9";ctx.beginPath();ctx.moveTo(0,-62);ctx.lineTo(0,-31);ctx.stroke();
+ // 腕・肘・手首を伸ばしてランジ。剣そのものは伸びない
+ const shoulderX=dir*7,shoulderY=-57,elbowX=dir*(attacking?20+extension*.42:16),elbowY=attacking?-55:-47,handX=dir*(attacking?28+extension:27),handY=attacking?-54:-49;
+ ctx.strokeStyle=f.flash>0?"#fff":f.suit;ctx.lineWidth=8;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(shoulderX,shoulderY);ctx.lineTo(elbowX,elbowY);ctx.lineTo(handX,handY);ctx.stroke();
+ ctx.fillStyle="#f2f5fa";ctx.beginPath();ctx.arc(handX,handY,5,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle=f.mask;ctx.beginPath();ctx.ellipse(0,-76,12,13,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#647489";ctx.lineWidth=1.2;ctx.stroke();
+ ctx.strokeStyle="#7b8b9e";ctx.lineWidth=.65;
+ for(let a=-8;a<=8;a+=4){ctx.beginPath();ctx.moveTo(a,-86);ctx.lineTo(a,-67);ctx.stroke()}
+ for(let b=-82;b<=-70;b+=4){ctx.beginPath();ctx.moveTo(-10,b);ctx.lineTo(10,b);ctx.stroke()}
+ ctx.fillStyle="#39485a";ctx.fillRect(-dir*11,-81,4,11);
+ const bladeLength=78;
+ ctx.strokeStyle="#1a2638";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(handX,handY);ctx.lineTo(handX+dir*7,handY-1);ctx.stroke();
+ ctx.strokeStyle=f.blade;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(handX+dir*7,handY-1);ctx.lineTo(handX+dir*(7+bladeLength),handY-1);ctx.stroke();
+ ctx.strokeStyle="#fff";ctx.lineWidth=.6;ctx.beginPath();ctx.moveTo(handX+dir*8,handY-2);ctx.lineTo(handX+dir*(7+bladeLength),handY-2);ctx.stroke();
+ ctx.fillStyle=f.blade;ctx.beginPath();ctx.arc(handX+dir*(7+bladeLength),handY-1,1.7,0,Math.PI*2);ctx.fill();
+ ctx.restore();
+ ctx.fillStyle=f.side==="blue"?"#20baff":"#ff4c65";ctx.font="bold 11px Arial";ctx.textAlign="center";ctx.fillText(f.name,0,-H*.13);
+ ctx.fillStyle="#101722";ctx.fillRect(-24,-H*.13+5,48,4);ctx.fillStyle=f.side==="blue"?"#20baff":"#ff4c65";ctx.fillRect(-24,-H*.13+5,48*Math.max(0,f.stamina/f.maxStamina),4);
+ ctx.restore();
 }
 </script>
 </body>

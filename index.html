@@ -655,6 +655,9 @@ bindControls();bindKeyboard();bindSettings();
 readSettings();resize();resetMatch();
 requestAnimationFrame(frame);
 })();
+ document.getElementById('titleStart').addEventListener('click', () => {
+  document.getElementById('titleScreen').style.display = 'none';
+});
 </script>
 </body>
 </html>

@@ -628,6 +628,463 @@ function closeCustomize(){
  }else $('home').classList.remove('hidden');
 }
 resize();
+function begin(f){
+    if(!run||!boutLive||paused||f.cool>0||f.attack>0||f.charging||f.stamina<3)return;
+    f.charging=true;
+    f.charge=0;
+}
+
+function release(f){
+    if(!f||!f.charging||!run||!boutLive)return;
+
+    f.charging=false;
+
+    // 短押し＝ドゥミ・ファント、長押し＝ロング・ファント
+    f.attackType=f.charge>=0.22?'long':'demi';
+    f.reach=f.attackType==='long'?1:0;
+    f.attack=f.attackType==='long'?.30:.18;
+    f.attackTime=f.attack;
+    f.cool=f.attackType==='long'?.48:.28;
+    f.hit=false;
+    f.stamina=Math.max(0,f.stamina-(f.attackType==='long'?14:6));
+}
+
+/* エンドラインを越えたら相手に1点 */
+function checkEndLines(){
+    if(!p||!c||!run)return;
+
+    const leftEnd=W*.10;
+    const rightEnd=W*.90;
+
+    // 前足の位置を判定。長いファントは前足がさらに前に出る
+    const pFoot=p.x+(p.attack>0&&p.attackType==='long'?72:42);
+    const cFoot=c.x-(c.attack>0&&c.attackType==='long'?72:42);
+
+    if(pFoot>=rightEnd){
+        scorePoint('c');
+        return;
+    }
+
+    if(cFoot<=leftEnd){
+        scorePoint('p');
+    }
+}
+
+/* ドゥミとロングで攻撃距離・踏み込みを変える */
+function drawFencer(f){
+    const floor=H*.76;
+    const active=f.attack>0;
+    const progress=active?1-f.attack/f.attackTime:0;
+    const long=active&&f.attackType==='long';
+
+    const maxLunge=long?Math.min(W*.085,76):Math.min(W*.032,27);
+    const lunge=active?Math.sin(progress*Math.PI)*maxLunge:0;
+
+    ctx.save();
+    ctx.translate(f.x+f.dir*lunge,floor-f.lift);
+    ctx.scale(f.dir,1);
+
+    const bob=Math.sin(performance.now()*.006+f.phase)*1.2;
+    const stride=Math.sin(f.step*3.2)*Math.min(7,Math.abs(f.vx)/50);
+
+    const front=active
+        ?(long?75+progress*13:48+progress*8)
+        :27+stride;
+
+    const back=-23-stride*.3;
+
+    limb(-3,-51,back,-25,11,f.suit);
+    limb(back,-25,back-10,-3,8,f.suit);
+    limb(-1,-50,front,-27,12,f.suit);
+    limb(front,-27,front+12,-3,8,f.suit);
+
+    ctx.fillStyle='#0c1726';
+    ctx.beginPath();
+    ctx.ellipse(back-7,0,13,4,0,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.ellipse(front+14,0,13,4,0,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle=f.suit;
+    ctx.beginPath();
+    ctx.moveTo(-15,-108+bob);
+    ctx.lineTo(13,-109+bob);
+    ctx.lineTo(20,-75);
+    ctx.lineTo(8,-49);
+    ctx.lineTo(-13,-51);
+    ctx.lineTo(-22,-77);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle='#9eafc1';
+    ctx.lineWidth=1;
+    ctx.stroke();
+
+    ctx.fillStyle=f.color;
+    ctx.fillRect(-8,-102,15,5);
+
+    ctx.fillStyle='#19283a';
+    ctx.beginPath();
+    ctx.ellipse(2,-126+bob,15,17,0,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle=f.mask;
+    ctx.beginPath();
+    ctx.ellipse(5,-126+bob,10,12,0,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.strokeStyle='#2c425a';
+    ctx.lineWidth=1;
+    for(let i=-3;i<=11;i+=3){
+        ctx.beginPath();
+        ctx.moveTo(i,-136+bob);
+        ctx.lineTo(i+3,-116+bob);
+        ctx.stroke();
+    }
+
+    // ロングは腕を大きく伸ばす。剣そのものの長さは変えない
+    const armX=active?(long?104:64):f.charging?39+f.charge/.35*20:43;
+    const armY=active?(long?-89:-84):-82;
+
+    limb(8,-100,23,-92,8,f.suit);
+    limb(23,-92,armX,armY,7,f.suit);
+
+    ctx.fillStyle='#15243a';
+    ctx.beginPath();
+    ctx.arc(armX,armY,5,0,Math.PI*2);
+    ctx.fill();
+
+    // 剣の長さは固定
+    const bladeLength=112;
+    ctx.strokeStyle=f.blade;
+    ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(armX,armY);
+    ctx.lineTo(armX+bladeLength,armY-3);
+    ctx.stroke();
+
+    ctx.strokeStyle='#fff';
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(armX,armY-1);
+    ctx.lineTo(armX+bladeLength,armY-4);
+    ctx.stroke();
+
+    if(f.charging){
+        ctx.strokeStyle='#ffe28b';
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.arc(0,-126,20+f.charge/.35*7,Math.PI,Math.PI*2);
+        ctx.stroke();
+    }
+
+    if(active){
+        ctx.fillStyle=long?'#ffe28b':'#72d7ff';
+        ctx.font='bold 10px Arial';
+        ctx.textAlign='center';
+        ctx.fillText(long?'LONG FENTE':'DEMI-FENTE',0,-157);
+    }
+
+    ctx.restore();
+
+    ctx.fillStyle='#0006';
+    ctx.beginPath();
+    ctx.ellipse(f.x,floor+5,34,6,0,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle='#15243a';
+    ctx.fillRect(f.x-34,floor+11,68,4);
+
+    ctx.fillStyle=f.color;
+    ctx.fillRect(f.x-34,floor+11,68*f.stamina/100,4);
+}
+
+/* ピストのライン・得点判定を追加 */
+function draw(){
+    if(!W||!H)return;
+
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#071326');
+    g.addColorStop(.55,'#101f33');
+    g.addColorStop(1,'#050c18');
+    ctx.fillStyle=g;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.strokeStyle='#20344d';
+    ctx.lineWidth=1;
+    for(let i=0;i<11;i++){
+        const x=i*W/10;
+        ctx.beginPath();
+        ctx.moveTo(x,0);
+        ctx.lineTo(W/2+(x-W/2)*.76,H*.2);
+        ctx.stroke();
+    }
+
+    ctx.fillStyle='#101d30';
+    ctx.fillRect(0,H*.18,W,H*.35);
+
+    const now=performance.now()*.001;
+
+    for(const l of lights){
+        ctx.globalAlpha=.6;
+        ctx.fillStyle=`hsl(${l.hue},85%,42%)`;
+        ctx.fillRect(l.x,l.y,l.size,l.size*2);
+
+        if(l.flash>0){
+            ctx.globalAlpha=.45+.45*Math.sin(now*8+l.phase);
+            ctx.fillStyle=scoreColor;
+            ctx.fillRect(l.x-1,l.y-1,l.size+2,l.size*2.4+2);
+        }
+    }
+
+    ctx.globalAlpha=1;
+
+    const top=H*.65;
+    const bottom=H*.93;
+    const piste=ctx.createLinearGradient(0,top,0,bottom);
+    piste.addColorStop(0,'#8b9dad');
+    piste.addColorStop(.08,'#526a80');
+    piste.addColorStop(.45,'#263d54');
+    piste.addColorStop(1,'#142438');
+
+    ctx.fillStyle=piste;
+    ctx.fillRect(0,top,W,bottom-top);
+
+    // ピストの外枠
+    ctx.strokeStyle='#d5e1ed';
+    ctx.lineWidth=2;
+    ctx.strokeRect(1,top,W-2,bottom-top);
+
+    // ライン位置
+    const leftEnd=W*.10;
+    const rightEnd=W*.90;
+    const leftWarning=W*.18;
+    const rightWarning=W*.82;
+    const leftStart=W*.42;
+    const rightStart=W*.58;
+    const center=W*.50;
+
+    // エンドライン
+    ctx.strokeStyle='#ff5d68';
+    ctx.lineWidth=4;
+    for(const x of [leftEnd,rightEnd]){
+        ctx.beginPath();
+        ctx.moveTo(x,top);
+        ctx.lineTo(x,bottom);
+        ctx.stroke();
+    }
+
+    // 警告ライン
+    ctx.strokeStyle='#ffcc65';
+    ctx.lineWidth=2;
+    for(const x of [leftWarning,rightWarning]){
+        ctx.beginPath();
+        ctx.moveTo(x,top);
+        ctx.lineTo(x,bottom);
+        ctx.stroke();
+    }
+
+    // 開始線
+    ctx.strokeStyle='#f4f7fb';
+    ctx.lineWidth=2;
+    for(const x of [leftStart,rightStart]){
+        ctx.beginPath();
+        ctx.moveTo(x,top);
+        ctx.lineTo(x,bottom);
+        ctx.stroke();
+    }
+
+    // 中央線
+    ctx.strokeStyle='#fff';
+    ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(center,top);
+    ctx.lineTo(center,bottom);
+    ctx.stroke();
+
+    ctx.textAlign='center';
+    ctx.font='bold 11px Arial';
+
+    ctx.fillStyle='#ff9ba4';
+    ctx.fillText('END LINE',leftEnd,top-5);
+    ctx.fillText('END LINE',rightEnd,top-5);
+
+    ctx.fillStyle='#ffe09b';
+    ctx.fillText('WARNING',leftWarning,top-5);
+    ctx.fillText('WARNING',rightWarning,top-5);
+
+    ctx.fillStyle='#f4f7fb';
+    ctx.fillText('EN GARDE',leftStart,top-5);
+    ctx.fillText('EN GARDE',rightStart,top-5);
+
+    ctx.fillStyle='#fff';
+    ctx.fillText('CENTER',center,top-5);
+
+    // 背景の大会表示
+    ctx.fillStyle='#08172a';
+    ctx.fillRect(W*.405,H*.19,W*.19,H*.09);
+
+    ctx.strokeStyle='#395b7c';
+    ctx.strokeRect(W*.405,H*.19,W*.19,H*.09);
+
+    ctx.font=`bold ${Math.max(10,W*.013)}px Arial`;
+    ctx.fillStyle='#d8e8f8';
+    ctx.fillText('FENCING • WORLD ARENA',W*.5,H*.225);
+
+    ctx.fillStyle='#6ccaff';
+    ctx.fillText('BLUE',W*.455,H*.26);
+
+    ctx.fillStyle='#ff6c80';
+    ctx.fillText('RED',W*.545,H*.26);
+
+    if(phase!=='home'&&p&&c){
+        drawFencer(p);
+        drawFencer(c);
+    }
+
+    if(phase==='fight'&&boutLive){
+        ctx.fillStyle='#d6e6f6';
+        ctx.font='bold 11px Arial';
+        ctx.fillText(
+            two?'P1: ← →　P2: A D':'MOVE • TAP ATTACK = DEMI / HOLD = LONG FENTE',
+            W/2,H*.38
+        );
+    }
+}
+
+/* 既存update関数を上書き */
+function update(dt){
+    if(!run||!boutLive||paused)return;
+
+    time+=dt;
+    if(time>=180){
+        finish();
+        return;
+    }
+
+    for(const f of [p,c]){
+        f.cool=Math.max(0,f.cool-dt);
+
+        if(f.charging){
+            f.charge=Math.min(.35,f.charge+dt);
+        }
+
+        if(f.attack>0){
+            f.attack=Math.max(0,f.attack-dt);
+        }
+
+        f.stamina=Math.min(100,f.stamina+dt*20);
+    }
+
+    const gap=Math.abs(c.x-p.x);
+
+    if(!two)thinkCPU(dt,gap);
+
+    moveFencer(p,keys.p*speedOf(p)*60,dt);
+    moveFencer(c,two?keys.c*speedOf(c)*60:c.aiMove*speedOf(c)*60,dt);
+
+    // 前足がエンドラインを越えたら得点
+    checkEndLines();
+
+    if(!run)return;
+
+    // 選手がピストの外へ飛び出さないよう制限
+    const minX=W*.10;
+    const maxX=W*.90;
+
+    p.x=clamp(p.x,minX,maxX);
+    c.x=clamp(c.x,minX,maxX);
+
+    // 選手同士が重ならないようにする
+    if(Math.abs(c.x-p.x)<30){
+        const mid=(p.x+c.x)/2;
+
+        if(p.x<c.x){
+            p.x=clamp(mid-15,minX,maxX);
+            c.x=clamp(mid+15,minX,maxX);
+        }else{
+            c.x=clamp(mid-15,minX,maxX);
+            p.x=clamp(mid+15,minX,maxX);
+        }
+
+        p.vx=0;
+        c.vx=0;
+    }
+
+    // 攻撃判定：剣の長さではなく、踏み込みと攻撃タイプで距離を変える
+    for(const [a,b,who] of [[p,c,'p'],[c,p,'c']]){
+        if(a.attack>0&&!a.hit){
+            const progress=1-a.attack/a.attackTime;
+            const gapAhead=(b.x-a.x)*a.dir;
+
+            const long=a.attackType==='long';
+            const range=long
+                ?145+a.reachStat*4
+                :82+a.reachStat*3;
+
+            if(
+                progress>.08&&
+                progress<.92&&
+                gapAhead>-8&&
+                gapAhead<range
+            ){
+                a.hit=true;
+
+                if(Math.random()*10>b.defense*.28){
+                    scorePoint(who);
+                }
+            }
+        }
+    }
+
+    for(const l of lights){
+        l.flash=Math.max(0,l.flash-dt*1.8);
+    }
+
+    $('timer').textContent=
+        Math.floor((180-time)/60)+':'+
+        String(Math.floor((180-time)%60)).padStart(2,'0');
+
+    $('ch1').style.width=(p.charge/.35*100)+'%';
+    $('ch2').style.width=(c.charge/.35*100)+'%';
+}
+
+/* 既存scorePointを上書き：得点後は選手を開始位置へ戻す */
+function scorePoint(who){
+    if(!run)return;
+
+    if(who==='p'){
+        sp++;
+        scoreColor='#168cff';
+    }else{
+        sc++;
+        scoreColor='#ff264c';
+    }
+
+    $('ps').textContent=sp;
+    $('cs').textContent=sc;
+
+    for(let i=0;i<lights.length;i++){
+        if(i%2===0)lights[i].flash=.7;
+    }
+
+    p.x=W*.28;
+    c.x=W*.72;
+
+    for(const f of [p,c]){
+        f.attack=0;
+        f.charging=false;
+        f.charge=0;
+        f.cool=.3;
+        f.hit=false;
+        f.vx=0;
+        f.attackType='demi';
+    }
+
+    if(sp>=15||sc>=15)finish();
+}
 </script>
 </body>
 </html>

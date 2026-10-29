@@ -628,6 +628,35 @@ function closeCustomize(){
  }else $('home').classList.remove('hidden');
 }
 resize();
+// エンドライン越境を正しく判定
+function checkEndLines(){
+  if(!run || !p || !c || !boutLive) return;
+
+  const leftEnd = W * 0.10;
+  const rightEnd = W * 0.90;
+
+  // 前足の位置。攻撃時は踏み込み分を加算
+  const pFoot = p.x + (p.attack > 0 ? 52 : 34);
+  const cFoot = c.x - (c.attack > 0 ? 52 : 34);
+
+  if(pFoot >= rightEnd){
+    scorePoint('c');
+    return;
+  }
+
+  if(cFoot <= leftEnd){
+    scorePoint('p');
+  }
+}
+
+// エンドライン付近まで移動可能にする
+function moveFencer(f,target,dt){
+  const speed = speedOf(f);
+  f.x += target * speed * 60 * dt;
+
+  // エンドラインを越えられるよう、画面端だけで制限
+  f.x = Math.max(20, Math.min(W - 20, f.x));
+}
 function begin(f){
     if(!run||!boutLive||paused||f.cool>0||f.attack>0||f.charging||f.stamina<3)return;
     f.charging=true;

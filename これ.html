@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#050a14">
+<title>FENCING ELITE</title>
+<style>
+:root{color-scheme:dark;--blue:#168cff;--red:#ff4168}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050a14;color:#f5f8ff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none}
+button,input,select{font:inherit}button{color:inherit;cursor:pointer;touch-action:manipulation}
+#app{position:relative;width:100%;height:100%;height:100dvh;overflow:hidden;background:#050a14}
+.screen{position:absolute;inset:0}
+#title{z-index:10;background:radial-gradient(ellipse at 50% 38%,#173b67,#071023 68%,#030711);display:block}
+#titleArt{position:absolute;width:100%;height:100%;inset:0;object-fit:contain;user-select:none;-webkit-user-drag:none}
+#startHotspot{position:absolute;left:34%;top:77%;width:32%;height:11%;border:0;border-radius:18px;background:transparent;outline-offset:3px}
+#fallback{display:none;position:absolute;inset:0;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(ellipse,#174c85,#050b16 70%);text-align:center}
+#fallback h1{font-size:clamp(44px,10vw,90px);font-style:italic;line-height:.9;margin:0;font-weight:1000}
+#fallback span{display:block;color:#42aaff}
+#fallback p{color:#aac6e8;letter-spacing:.2em;font-size:11px}
+#fallback button{margin-top:24px;padding:14px 42px;background:#ffffff18;border:1px solid white;letter-spacing:.2em;border-radius:10px}
+#menu,#result{display:none;z-index:8;align-items:center;justify-content:center;padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));background:#030914ed;backdrop-filter:blur(8px)}
+.panel{width:min(680px,100%);max-height:100%;overflow:auto;border:1px solid #31557d;background:linear-gradient(145deg,#132744f5,#07101df5);border-radius:16px;padding:clamp(16px,4vw,28px);box-shadow:0 20px 80px #0009;overscroll-behavior:contain}
+.brand{text-align:center;font-size:clamp(28px,6vw,45px);font-weight:1000;font-style:italic;margin:0}
+.brand span{color:#4aaaff}.sub{text-align:center;color:#9cb5d5;letter-spacing:.2em;font-size:11px;margin:7px 0 18px}
+.label{color:#82bfff;font-size:12px;font-weight:800;letter-spacing:.14em;margin:15px 0 8px}
+.row{display:flex;gap:8px}.choice{flex:1;border:1px solid #365574;background:#0b1728;padding:12px 7px;border-radius:9px;font-weight:800}
+.choice.active{border-color:#4daaff;background:#12345a}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.field{display:flex;flex-direction:column;gap:5px;color:#b8c9df;font-size:12px}
+.field input,.field select{width:100%;min-width:0;border:1px solid #304966;background:#071321;color:white;border-radius:8px;padding:10px;font-size:14px}
+.primary,.secondary{width:100%;border-radius:9px;padding:14px;font-weight:1000;margin-top:16px}
+.primary{border:0;background:linear-gradient(90deg,#1476df,#2ea7ff);letter-spacing:.12em}
+.secondary{margin-top:8px;border:1px solid #365574;background:#0b1728}
+#game{display:none;background:#050a14}canvas{display:block;width:100%;height:100%}
+#controls{position:absolute;z-index:3;left:0;right:0;bottom:calc(7px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;gap:6px;padding:0 8px;pointer-events:none}
+.group{display:flex;gap:5px;align-items:end;pointer-events:auto}
+.ctrl{min-width:48px;min-height:51px;padding:6px;border:1px solid #6785a8;background:#0b1c30ed;border-radius:10px;font-weight:900;box-shadow:0 5px 14px #0006;user-select:none;-webkit-user-select:none}
+.ctrl small{display:block;font-size:9px;color:#a7c3e4}
+.ctrl.attack{min-width:64px;background:linear-gradient(#1764ad,#0b2d52);border-color:#64b9ff}
+.ctrl.pressed{background:#256db0;transform:scale(.97)}
+#topButtons{position:absolute;z-index:4;top:calc(7px + env(safe-area-inset-top));left:9px;right:9px;display:flex;justify-content:space-between;pointer-events:none}
+#topButtons button{pointer-events:auto;border:1px solid #5b7697;background:#09172bd9;border-radius:9px;padding:8px 11px;font-size:12px}
+#help{position:absolute;z-index:2;bottom:calc(68px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;color:#d0e0f5;font-size:10px;letter-spacing:.05em;pointer-events:none;text-shadow:0 1px 4px #000}
+@media(max-width:600px){.ctrl{min-width:39px;font-size:10px;min-height:48px}.ctrl.attack{min-width:53px}#controls{padding:0 4px}.group{gap:3px}.ctrl small{font-size:8px}.panel{padding:15px}.sub{margin-bottom:10px}}
+@media(max-height:500px){.panel{padding:10px 16px}.label{margin:8px 0 5px}.primary,.secondary{padding:9px;margin-top:8px}.field input,.field select{padding:6px}.ctrl{min-height:42px}#help{display:none}}
+</style>
+</head>
+<body>
+<div id="app">
+<section id="title" class="screen" aria-label="FENCING ELITE title screen">
+  <img id="titleArt" alt="" draggable="false">
+  <div id="fallback"><h1>FENCING <span>ELITE</span></h1><p>TACTICS · SPEED · PRECISION</p><button id="fallbackStart">▶ START ◀</button></div>
+  <button id="startHotspot" aria-label="START ゲーム開始" title="START"></button>
+</section>
+<section id="menu" class="screen">
+ <div class="panel">
+  <h1 class="brand">FENCING <span>ELITE</span></h1><div class="sub">TACTICS · SPEED · PRECISION</div>
+  <div class="label">GAME MODE</div>
+  <div class="row"><button class="choice active" data-mode="cpu">1 PLAYER vs CPU</button><button class="choice" data-mode="2p">2 PLAYER LOCAL</button></div>
+  <div class="label">FENCERS</div>
+  <div class="fields">
+   <label class="field">LEFT PLAYER NAME<input id="nameP" maxlength="18" value="BLUE" autocomplete="off"></label>
+   <label class="field">RIGHT PLAYER NAME<input id="nameC" maxlength="18" value="RED" autocomplete="off"></label>
+   <label class="field">LEFT UNIFORM / LIGHT<input id="colorP" type="color" value="#168cff"></label>
+   <label class="field">RIGHT UNIFORM / LIGHT<input id="colorC" type="color" value="#ff4168"></label>
+   <label class="field">LEFT SPEED<select id="speedP"><option value="0.23">Standard</option><option value="0.30">Fast</option><option value="0.18">Heavy</option></select></label>
+   <label class="field">CPU LEVEL<select id="levelC"><option value=".62">Easy</option><option value=".85" selected>Normal</option><option value="1.08">Hard</option></select></label>
+  </div>
+  <button id="begin" class="primary">▶ START MATCH</button><button id="backTitle" class="secondary">TITLE SCREEN</button>
+ </div>
+</section>
+<section id="game" class="screen">
+ <canvas id="cv" aria-label="Fencing match"></canvas>
+ <div id="topButtons"><button id="menuBtn">☰ MENU</button><button id="pauseBtn">Ⅱ PAUSE</button></div>
+ <div id="help">HOLD LUNGE TO CHARGE · RELEASE TO ATTACK</div>
+ <div id="controls">
+  <div class="group" id="leftControls">
+   <button class="ctrl" data-side="p" data-act="back">◀<small>BACK (A)</small></button>
+   <button class="ctrl" data-side="p" data-act="forward">▶<small>ADVANCE (D)</small></button>
+   <button class="ctrl attack" data-side="p" data-act="attack">LUNGE<small>F / SPACE</small></button>
+  </div>
+  <div class="group" id="rightControls">
+   <button class="ctrl attack" data-side="c" data-act="attack">LUNGE<small>ENTER</small></button>
+   <button class="ctrl" data-side="c" data-act="forward">◀<small>ADVANCE (←)</small></button>
+   <button class="ctrl" data-side="c" data-act="back">▶<small>BACK (→)</small></button>
+  </div>
+ </div>
+</section>
+<section id="result" class="screen">
+ <div class="panel" style="text-align:center"><h1 id="resultTitle" class="brand">VICTORY</h1><p id="resultText"></p><button id="again" class="primary">REMATCH</button><button id="resultMenu" class="secondary">MENU</button></div>
+</section>
+</div>
+<script>
+(()=> {
+'use strict';
+const $=id=>document.getElementById(id);
+const canvas=$('cv'),ctx=canvas.getContext('2d',{alpha:false});
+const title=$('title'),menu=$('menu'),game=$('game'),result=$('result');
+const END_LEFT=.105,END_RIGHT=.895,MIN_GAP=.165,WIN_SCORE=15,MATCH_SECONDS=180;
+let mode='cpu',running=false,paused=false,phase='menu',last=0,raf=0,elapsed=0,matchLeft=MATCH_SECONDS;
+let phaseUntil=0,countdownStage=0,pointTimer=0,flash=0,flashColor='#fff',flashText='',speedP=.23,levelC=.85,W=0,H=0,D=1,attackSerial=0;
+const makeFencer=(x)=>({x,score:0,move:0,charge:0,attack:0,attackTime:0,attackDuration:.36,hitDone:false,cooldown:0,lunge:0,lean:0});
+const S={p:makeFencer(.31),c:makeFencer(.69)};
+const I={p:{forward:false,back:false,attack:false},c:{forward:false,back:false,attack:false}};
+const pressStarted={p:0,c:0};
+function resize(){
+ D=Math.min(window.devicePixelRatio||1,2);
+ const rect=canvas.getBoundingClientRect();W=Math.max(1,rect.width);H=Math.max(1,rect.height);
+ canvas.width=Math.round(W*D);canvas.height=Math.round(H*D);
+ ctx.setTransform(D,0,0,D,0,0);draw();
+}
+window.addEventListener('resize',resize,{passive:true});
+function clearInput(){
+ for(const s of ['p','c']){for(const a of ['forward','back','attack'])I[s][a]=false;pressStarted[s]=0;}
+ document.querySelectorAll('.ctrl').forEach(b=>b.classList.remove('pressed'));
+}
+function cancelLoop(){running=false;cancelAnimationFrame(raf);clearTimeout(pointTimer);}
+function showMenu(){cancelLoop();paused=false;game.style.display='none';result.style.display='none';title.style.display='none';menu.style.display='flex';phase='menu';}
+function showTitle(){cancelLoop();paused=false;menu.style.display='none';game.style.display='none';result.style.display='none';title.style.display='block';phase='menu';}
+function resetFencers(){S.p=makeFencer(.31);S.c=makeFencer(.69);}
+function resetForNextPoint(){
+ for(const [s,x] of [['p',.31],['c',.69]]){
+  const f=S[s];f.x=x;f.move=0;f.charge=0;f.attack=0;f.attackTime=0;f.hitDone=false;f.cooldown=0;f.lunge=0;f.lean=0;
+ }
+}
+function start(){
+ clearTimeout(pointTimer);resetFencers();clearInput();
+ speedP=+$('speedP').value;levelC=+$('levelC').value;
+ $('rightControls').style.display=mode==='2p'?'flex':'none';
+ $('help').textContent=mode==='cpu'?'MOVE: A / D OR ARROWS · HOLD LUNGE TO CHARGE':'P1: A/D + F · P2: ←/→ + ENTER';
+ menu.style.display='none';title.style.display='none';result.style.display='none';game.style.display='block';
+ resize();phase='countdown';countdownStage=0;running=true;paused=false;elapsed=0;matchLeft=MATCH_SECONDS;phaseUntil=performance.now()+650;last=performance.now();raf=requestAnimationFrame(loop);
+}
+function name(s){return $('name'+(s==='p'?'P':'C')).value.trim()||(s==='p'?'BLUE':'RED');}
+function color(s){return $(s==='p'?'colorP':'colorC').value;}
+function startCountdown(t){phase='countdown';phaseUntil=t+650;clearInput();}
+function awardPoint(who,why){
+ if(!running||phase!=='fight')return;
+ phase='point';clearInput();S[who].score++;flash=1;flashColor=color(who);
+ flashText=why==='END-LINE'?'END-LINE FAULT':'TOUCHÉ!';
+ if(S[who].score>=WIN_SCORE){pointTimer=setTimeout(()=>finish(who,'15 TOUCHES'),1050);return;}
+ if(matchLeft<=0){pointTimer=setTimeout(()=>finish(S.p.score===S.c.score?null:(S.p.score>S.c.score?'p':'c'),'TIME'),1050);return;}
+ pointTimer=setTimeout(()=>{
+  if(!running)return;
+  resetForNextPoint();startCountdown(performance.now());
+ },1050);
+}
+function finish(who,reason){
+ running=false;cancelAnimationFrame(raf);clearTimeout(pointTimer);clearInput();phase='result';
+ game.style.display='none';result.style.display='flex';
+ if(who){$('resultTitle').textContent=name(who)+' WINS';$('resultTitle').style.color=color(who);$('resultText').textContent=`${S.p.score} : ${S.c.score}  ·  ${reason}`;}
+ else{$('resultTitle').textContent='DRAW';$('resultTitle').style.color='#f5f8ff';$('resultText').textContent=`${S.p.score} : ${S.c.score}  ·  ${reason}`;}
+}
+function beginAttack(s,charge){
+ const f=S[s];if(!running||phase!=='fight'||f.cooldown>0||f.attack>0)return;
+ f.charge=Math.max(.08,Math.min(1,charge));f.attack=1;f.attackTime=0;f.attackDuration=.34+f.charge*.16;f.hitDone=false;f.lunge=0;f.lean=0;attackSerial++;
+}
+function setInput(s,a,v){
+ if(s==='c'&&mode==='cpu')return;
+ if(!I[s])return;
+ if(a==='attack'){
+  if(v&&!I[s].attack){I[s].attack=true;pressStarted[s]=performance.now();}
+  else if(!v&&I[s].attack){
+   I[s].attack=false;
+   const held=Math.max(0,(performance.now()-pressStarted[s])/1000);
+   beginAttack(s,Math.min(1,held/0.72));
+   pressStarted[s]=0;
+  }
+ }else I[s][a]=v;
+}
+function cpuThink(dt){
+ const f=S.c,o=S.p;if(mode!=='cpu'||phase!=='fight')return;
+ const dist=f.x-o.x; // right fencer x is greater; negative movement advances left
+ I.c.forward=false;I.c.back=false;
+ if(f.attack===0&&f.cooldown<=0){
+  if(dist>.40)I.c.forward=true;
+  else if(dist<.24)I.c.back=true;
+  if(dist<.39&&Math.random()<dt*(levelC*1.25)){
+   const charge=.35+Math.random()*(levelC>.9?.65:.42);
+   beginAttack('c',charge);
+  }
+ }
+}
+function moveAndResolve(dt){
+ const p=S.p,c=S.c;
+ cpuThink(dt);
+ // Capture both desired movements first, then resolve spacing once. This avoids order-dependent overlap.
+ const pDir=(I.p.forward?1:0)-(I.p.back?1:0);
+ const cDir=(I.c.forward?1:0)-(I.c.back?1:0);
+ const pVel=speedP*(p.attack>0?.22:1),cVel=.23*(mode==='cpu'?levelC:1)*(c.attack>0?.22:1);
+ p.x+=pDir*pVel*dt;c.x-=cDir*cVel*dt;
+ p.x=Math.max(.015,Math.min(.985,p.x));c.x=Math.max(.015,Math.min(.985,c.x));
+ // End-line fault has priority if a fencer crosses their own end line.
+ if(p.x<END_LEFT){awardPoint('c','END-LINE');return;}
+ if(c.x>END_RIGHT){awardPoint('p','END-LINE');return;}
+ // Keep the fencers separated; neither body can pass through the other.
+ if(p.x>c.x-MIN_GAP){
+  const overlap=p.x-(c.x-MIN_GAP);
+  const pClosing=pDir>0, cClosing=cDir>0;
+  if(pClosing&&cClosing){p.x-=overlap*.5;c.x+=overlap*.5;}
+  else if(pClosing)p.x-=overlap;
+  else if(cClosing)c.x+=overlap;
+  else {p.x-=overlap*.5;c.x+=overlap*.5;}
+ }
+ p.x=Math.max(END_LEFT+.002,Math.min(c.x-MIN_GAP,p.x));
+ c.x=Math.min(END_RIGHT-.002,Math.max(p.x+MIN_GAP,c.x));
+ updateAttack('p',dt);if(phase!=='fight')return;updateAttack('c',dt);
+}
+function updateAttack(s,dt){
+ const f=S[s],o=S[s==='p'?'c':'p'];
+ f.cooldown=Math.max(0,f.cooldown-dt);
+ if(f.attack===1){
+  f.attackTime+=dt;
+  const u=Math.min(1,f.attackTime/f.attackDuration);
+  // Smooth extension then recovery, with a clear front-foot and arm extension.
+  f.lunge=u<.58?Math.sin((u/.58)*Math.PI/2):Math.max(0,1-(u-.58)/.42);
+  f.lean=f.lunge;
+  if(!f.hitDone&&u>=.36){
+   f.hitDone=true;
+   const dist=Math.abs(o.x-f.x);
+   const reach=.205+f.charge*.135;
+   const target=s==='p'?o.x-f.x:f.x-o.x;
+   const inFront=target>0;
+   if(dist<=reach&&inFront){
+    awardPoint(s,'TOUCHÉ');return;
+   }
+  }
+  if(u>=1){f.attack=0;f.lunge=0;f.lean=0;f.cooldown=.42;f.charge=0;}
+ }
+}
+function loop(t){
+ if(!running)return;
+ const dt=Math.min(Math.max((t-last)/1000,0),.035);last=t;
+ if(!paused){
+  if(phase==='countdown'&&t>=phaseUntil){
+   countdownStage++;
+   if(countdownStage>=3){phase='fight';phaseUntil=0;countdownStage=0;}
+   else phaseUntil=t+650;
+  }
+  if(phase==='fight'){
+   elapsed+=dt;matchLeft=Math.max(0,MATCH_SECONDS-elapsed);
+   moveAndResolve(dt);
+   if(matchLeft<=0&&phase==='fight')finish(S.p.score===S.c.score?null:(S.p.score>S.c.score?'p':'c'),'TIME');
+  }
+ }
+ draw();raf=requestAnimationFrame(loop);
+}
+function roundRect(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r);c.fill();}
+function drawFencer(s){
+ const f=S[s],left=s==='p',x=f.x*W,y=H*.675,scale=Math.min(W/900,H/520),sgn=left?1:-1,accent=color(s),l=f.lunge;
+ ctx.save();ctx.translate(x,y);ctx.scale(sgn*scale,scale);ctx.lineCap='round';ctx.lineJoin='round';
+ // Back leg stays bent and anchored; front leg extends during a lunge.
+ const backX=-18-l*8,frontX=35+l*50,kneeY=-36-l*8;
+ ctx.strokeStyle='#101b2b';ctx.lineWidth=21;ctx.beginPath();ctx.moveTo(-7,-73);ctx.lineTo(backX,kneeY);ctx.lineTo(-28,-7);ctx.stroke();
+ ctx.strokeStyle='#aebed0';ctx.lineWidth=14;ctx.beginPath();ctx.moveTo(-7,-73);ctx.lineTo(backX,kneeY);ctx.lineTo(-28,-7);ctx.stroke();
+ ctx.fillStyle='#17263a';roundRect(ctx,-52,-10,36,9,4);
+ ctx.strokeStyle='#101b2b';ctx.lineWidth=22;ctx.beginPath();ctx.moveTo(8,-75);ctx.lineTo(22+l*22,-40-l*10);ctx.lineTo(frontX,-9);ctx.stroke();
+ ctx.strokeStyle='#d3deeb';ctx.lineWidth=14;ctx.beginPath();ctx.moveTo(8,-75);ctx.lineTo(22+l*22,-40-l*10);ctx.lineTo(frontX,-9);ctx.stroke();
+ ctx.fillStyle='#17263a';roundRect(ctx,frontX-8,-11,43,10,4);
+ // Jacket, hips, and shoulder line.
+ ctx.fillStyle='#07101d';ctx.beginPath();ctx.moveTo(-24,-153);ctx.lineTo(18,-157);ctx.lineTo(36,-82);ctx.lineTo(9,-66);ctx.lineTo(-29,-80);ctx.closePath();ctx.fill();
+ const grad=ctx.createLinearGradient(-26,0,35,0);grad.addColorStop(0,'#f4f7fc');grad.addColorStop(.48,'#d7e1ed');grad.addColorStop(1,'#8294aa');
+ ctx.fillStyle=grad;ctx.beginPath();ctx.moveTo(-21,-151);ctx.lineTo(16,-155);ctx.lineTo(29,-85);ctx.lineTo(7,-72);ctx.lineTo(-26,-83);ctx.closePath();ctx.fill();ctx.strokeStyle='#f5f8ff';ctx.lineWidth=2;ctx.stroke();
+ ctx.strokeStyle=accent;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-12,-145);ctx.lineTo(1,-84);ctx.stroke();
+ ctx.fillStyle='#aebed0';roundRect(ctx,-7,-172,17,20,4);
+ // Mask with metal mesh.
+ const mg=ctx.createLinearGradient(-25,-205,25,-173);mg.addColorStop(0,'#eef3fb');mg.addColorStop(.55,'#a9b9cd');mg.addColorStop(1,'#536b86');
+ ctx.fillStyle=mg;ctx.beginPath();ctx.ellipse(0,-189,29,22,-.04,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#f4f8ff';ctx.lineWidth=3;ctx.stroke();
+ ctx.save();ctx.beginPath();ctx.ellipse(0,-189,25,18,-.04,0,Math.PI*2);ctx.clip();ctx.strokeStyle='#53677e';ctx.lineWidth=1;
+ for(let yy=-207;yy<-169;yy+=4){ctx.beginPath();ctx.moveTo(-30,yy);ctx.lineTo(30,yy-2);ctx.stroke();}
+ for(let xx=-22;xx<25;xx+=5){ctx.beginPath();ctx.moveTo(xx,-208);ctx.lineTo(xx+2,-170);ctx.stroke();}ctx.restore();
+ // Weapon arm follows the lunge; blade is always aimed toward the opponent.
+ const shoulder={x:10,y:-143},elbow={x:29+l*17,y:-128-l*4},hand={x:55+l*45,y:-132-l*10};
+ ctx.strokeStyle='#8a9cb2';ctx.lineWidth=18;ctx.beginPath();ctx.moveTo(shoulder.x,shoulder.y);ctx.lineTo(elbow.x,elbow.y);ctx.lineTo(hand.x,hand.y);ctx.stroke();
+ ctx.strokeStyle='#f0f5fb';ctx.lineWidth=12;ctx.beginPath();ctx.moveTo(shoulder.x,shoulder.y);ctx.lineTo(elbow.x,elbow.y);ctx.lineTo(hand.x,hand.y);ctx.stroke();
+ ctx.fillStyle='#1a2b41';ctx.beginPath();ctx.arc(hand.x,hand.y,8,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle='#9fb6d2';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(hand.x+2,hand.y);ctx.lineTo(hand.x+13,hand.y);ctx.stroke();
+ const swordLen=105+l*72+f.charge*15;
+ ctx.strokeStyle='#f4fbff';ctx.lineWidth=2.8;ctx.beginPath();ctx.moveTo(hand.x+11,hand.y);ctx.lineTo(hand.x+swordLen,hand.y-4);ctx.stroke();
+ ctx.strokeStyle='#7bc4ff';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(hand.x+13,hand.y+3);ctx.lineTo(hand.x+swordLen,hand.y-1);ctx.stroke();
+ ctx.restore();
+ ctx.save();ctx.globalAlpha=.24;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(x,y+2,scale*(58+l*20),scale*8,0,0,Math.PI*2);ctx.fill();ctx.restore();
+}
+function formatTime(t){const sec=Math.ceil(t);return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;}
+function draw(){
+ if(!W||!H)return;
+ ctx.clearRect(0,0,W,H);
+ const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#071327');bg.addColorStop(.45,'#142b47');bg.addColorStop(1,'#030711');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+ // Dark arena seating with restrained colored LEDs.
+ const step=Math.max(11,W/95);
+ for(let row=0;row<7;row++)for(let col=0;col<Math.ceil(W/step);col++){
+  const x=col*step+(row%2)*step*.45,y=H*.105+row*H*.035,wave=Math.sin(col*.39+row*1.7+elapsed*1.35);
+  ctx.fillStyle=wave>.82?(col%2?color('p'):color('c')):(wave>.18?'#456c9a':'#243a59');
+  ctx.globalAlpha=.32+Math.abs(wave)*.34;ctx.beginPath();ctx.arc(x,y,1.2+(wave>.82?1:0),0,Math.PI*2);ctx.fill();
+ }
+ ctx.globalAlpha=1;
+ for(let i=0;i<6;i++){const x=W*(.08+i*.168),glow=ctx.createRadialGradient(x,H*.16,1,x,H*.16,W*.11);glow.addColorStop(0,'#a9d8ff24');glow.addColorStop(1,'#6dbaff00');ctx.fillStyle=glow;ctx.fillRect(x-W*.11,H*.05,W*.22,H*.28);}
+ // Metallic perspective piste.
+ const horizon=H*.52,base=H*.80;ctx.beginPath();ctx.moveTo(W*.12,horizon);ctx.lineTo(W*.88,horizon);ctx.lineTo(W*.99,base);ctx.lineTo(W*.01,base);ctx.closePath();
+ const pg=ctx.createLinearGradient(0,horizon,0,base);pg.addColorStop(0,'#62768e');pg.addColorStop(.16,'#e0e8f1');pg.addColorStop(.45,'#7b8da3');pg.addColorStop(.72,'#cbd5e1');pg.addColorStop(1,'#4b5f78');ctx.fillStyle=pg;ctx.fill();ctx.strokeStyle='#dbeaff';ctx.lineWidth=2;ctx.stroke();
+ function pisteLine(frac,col,width){const xx=W*(.12+frac*.76);ctx.strokeStyle=col;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(xx,horizon);ctx.lineTo(W*(.01+frac*.98),base);ctx.stroke();}
+ // End lines sit at the ends of the piste.
+ pisteLine(0,'#ff496d',Math.max(2,W*.003));pisteLine(1,'#ff496d',Math.max(2,W*.003));
+ pisteLine(.5,'#f4f8ff',2);pisteLine(.32,'#eaf4ff99',1.5);pisteLine(.68,'#eaf4ff99',1.5);
+ ctx.fillStyle='#fff';ctx.globalAlpha=.12;ctx.fillRect(W*.12,H*.61,W*.76,2);ctx.globalAlpha=1;
+ drawFencer('p');drawFencer('c');
+ // Scoreboard and match clock.
+ const bw=Math.min(320,W*.78),bx=(W-bw)/2,by=H*.075,bh=Math.min(90,H*.15);
+ ctx.fillStyle='#030914e8';roundRect(ctx,bx,by,bw,bh,12);ctx.strokeStyle='#355779';ctx.lineWidth=1;ctx.strokeRect(bx,by,bw,bh);
+ ctx.textAlign='center';ctx.font='800 11px system-ui';ctx.fillStyle=color('p');ctx.fillText(name('p'),W/2-bw*.22,by+bh*.27);
+ ctx.fillStyle=color('c');ctx.fillText(name('c'),W/2+bw*.22,by+bh*.27);
+ ctx.font=`1000 ${Math.min(42,H*.065)}px system-ui`;ctx.fillStyle=color('p');ctx.fillText(S.p.score,W/2-bw*.22,by+bh*.78);
+ ctx.fillStyle='#a6b9d0';ctx.font='900 20px system-ui';ctx.fillText(':',W/2,by+bh*.72);
+ ctx.font=`1000 ${Math.min(42,H*.065)}px system-ui`;ctx.fillStyle=color('c');ctx.fillText(S.c.score,W/2+bw*.22,by+bh*.78);
+ ctx.font='800 12px system-ui';ctx.fillStyle='#f5f8ff';ctx.fillText(formatTime(matchLeft),W/2,by+bh+17);
+ let status='';
+ if(phase==='countdown'){
+  status=countdownStage===0?'EN GARDE':countdownStage===1?'PRÊTS?':'ALLEZ!';
+ }else if(phase==='point')status=flashText;
+ else if(paused)status='PAUSED';
+ else status='FENCING';
+ ctx.font=`1000 ${Math.min(32,H*.05)}px system-ui`;ctx.fillStyle='#f6f9ff';ctx.shadowColor='#000';ctx.shadowBlur=12;ctx.fillText(status,W/2,H*.355);ctx.shadowBlur=0;
+ ctx.font='600 10px system-ui';ctx.fillStyle='#d0e0f5';
+ const sub=phase==='countdown'?'READY ON THE PISTE':phase==='point'?'POINT AWARDED':paused?'TAP RESUME TO CONTINUE':'FOOTWORK  ·  DISTANCE  ·  TIMING';
+ ctx.fillText(sub,W/2,H*.395);
+ // Thin electronic rails echo each fencer's color.
+ for(let i=0;i<Math.ceil(W/8);i++){ctx.fillStyle=i%2?color('p'):color('c');ctx.globalAlpha=.28;ctx.fillRect(i*8,H*.465+(i%3)*3,2,2);}ctx.globalAlpha=1;
+ if(flash>0&&phase==='point'){ctx.globalAlpha=Math.min(.2,flash*.2);ctx.fillStyle=flashColor;ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;flash=Math.max(0,flash-.025);}
+ if(paused){ctx.fillStyle='#030914b8';ctx.fillRect(0,0,W,H);ctx.fillStyle='white';ctx.font='900 30px system-ui';ctx.fillText('PAUSED',W/2,H*.48);}
+}
+$('startHotspot').addEventListener('click',showMenu);
+$('fallbackStart').addEventListener('click',showMenu);
+$('begin').addEventListener('click',start);
+$('backTitle').addEventListener('click',showTitle);
+$('menuBtn').addEventListener('click',showMenu);
+$('again').addEventListener('click',start);
+$('resultMenu').addEventListener('click',showMenu);
+$('pauseBtn').addEventListener('click',()=>{
+ if(!running)return;paused=!paused;$('pauseBtn').textContent=paused?'▶ RESUME':'Ⅱ PAUSE';
+ if(!paused)last=performance.now();draw();
+});
+document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{
+ mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('active',x===b));
+ $('rightControls').style.display=mode==='2p'?'flex':'none';
+}));
+document.querySelectorAll('.ctrl').forEach(b=>{
+ const s=b.dataset.side,a=b.dataset.act;
+ const down=e=>{e.preventDefault();b.classList.add('pressed');if(a==='attack'){if(s==='c'&&mode==='cpu')return;I[s].attack=true;pressStarted[s]=performance.now();}else setInput(s,a,true);};
+ const up=e=>{e.preventDefault();b.classList.remove('pressed');if(a==='attack'){if(s==='c'&&mode==='cpu')return;if(I[s].attack){I[s].attack=false;const held=Math.max(0,(performance.now()-pressStarted[s])/1000);beginAttack(s,Math.min(1,held/.72));pressStarted[s]=0;}}else setInput(s,a,false);};
+ b.addEventListener('pointerdown',down);['pointerup','pointercancel','pointerleave','lostpointercapture'].forEach(ev=>b.addEventListener(ev,up));
+});
+function key(e){if(e.code==='Space')return 'space';return e.key.toLowerCase();}
+window.addEventListener('keydown',e=>{
+ const k=key(e);
+ if(['arrowleft','arrowright','space','enter'].includes(k))e.preventDefault();
+ if(k==='a')setInput('p','back',true);
+ if(k==='d')setInput('p','forward',true);
+ if(k==='f'||k==='space'){if(!I.p.attack){I.p.attack=true;pressStarted.p=performance.now();}}
+ if(mode==='2p'){
+  if(k==='arrowleft')setInput('c','forward',true);
+  if(k==='arrowright')setInput('c','back',true);
+  if(k==='enter'&&!I.c.attack){I.c.attack=true;pressStarted.c=performance.now();}
+ }else{
+  if(k==='arrowleft')setInput('p','back',true);
+  if(k==='arrowright')setInput('p','forward',true);
+ }
+});
+window.addEventListener('keyup',e=>{
+ const k=key(e);
+ if(k==='a')setInput('p','back',false);
+ if(k==='d')setInput('p','forward',false);
+ if(k==='f'||k==='space'){if(I.p.attack){I.p.attack=false;beginAttack('p',Math.min(1,(performance.now()-pressStarted.p)/720));pressStarted.p=0;}}
+ if(k==='arrowleft'){if(mode==='2p')setInput('c','forward',false);else setInput('p','back',false);}
+ if(k==='arrowright'){if(mode==='2p')setInput('c','back',false);else setInput('p','forward',false);}
+ if(k==='enter'&&I.c.attack){I.c.attack=false;beginAttack('c',Math.min(1,(performance.now()-pressStarted.c)/720));pressStarted.c=0;}
+});
+const titleArt=$('titleArt');
+titleArt.onload=()=>{ $('fallback').style.display='none'; titleArt.style.display='block'; placeHotspot(); };
+titleArt.onerror=()=>{titleArt.style.display='none';$('fallback').style.display='flex';$('startHotspot').style.display='none';};
+function placeHotspot(){
+ // Calculate the actual displayed image box (object-fit: contain), so the START tap target
+ // remains aligned even on tall phones and wide iPads.
+ const r=title.getBoundingClientRect(),iw=titleArt.naturalWidth,ih=titleArt.naturalHeight;
+ if(!iw||!ih)return;
+ const scale=Math.min(r.width/iw,r.height/ih),dw=iw*scale,dh=ih*scale,left=(r.width-dw)/2,top=(r.height-dh)/2;
+ const b=$('startHotspot');b.style.left=(left+dw*.34)+'px';b.style.top=(top+dh*.77)+'px';b.style.width=(dw*.32)+'px';b.style.height=(dh*.11)+'px';b.style.display='block';
+}
+window.addEventListener('resize',placeHotspot,{passive:true});
+titleArt.src='title-screen.jpg';
+resize();
+})();
+</script>
+</body>
+</html>

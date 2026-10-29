@@ -629,26 +629,32 @@ function closeCustomize(){
 }
 resize();
 // エンドライン越境を正しく判定
+// エンドライン越境による連続得点を防止
+let endLineScoring = false;
+
 function checkEndLines(){
-  if(!run || !p || !c || !boutLive) return;
+  if(!run || !boutLive || paused || endLineScoring) return;
 
   const leftEnd = W * 0.10;
   const rightEnd = W * 0.90;
 
-  // 前足の位置。攻撃時は踏み込み分を加算
   const pFoot = p.x + (p.attack > 0 ? 52 : 34);
   const cFoot = c.x - (c.attack > 0 ? 52 : 34);
 
+  let winner = null;
+
   if(pFoot >= rightEnd){
-    scorePoint('c');
-    return;
+    winner = 'c';
+  } else if(cFoot <= leftEnd){
+    winner = 'p';
   }
 
-  if(cFoot <= leftEnd){
-    scorePoint('p');
+  if(winner){
+    endLineScoring = true;
+    scorePoint(winner);
+    endLineScoring = false;
   }
 }
-
 // エンドライン付近まで移動可能にする
 function moveFencer(f,target,dt){
   const speed = speedOf(f);

@@ -164,10 +164,10 @@
     <div style="position: relative;">
         <canvas id="gameCanvas" width="800" height="400"></canvas>
 
-        <!-- スタート・ゲームオーバーモーダル -->
+        <!-- モーダル -->
         <div id="modal" class="modal">
             <h2 id="modalTitle">FENCING ELITE</h2>
-            <p id="modalDesc">本格エペ競技シミュレーション。相手の隙を突き、正確なランジでポイントを奪え！</p>
+            <p id="modalDesc">本格エペ競技シミュレーション。格闘ゲームのような間合いの駆け引きで勝利をつかめ！</p>
             <div style="display: flex; gap: 12px;">
                 <button class="menu-btn" onclick="startGame('cpu')">1P vs CPU</button>
                 <button class="menu-btn" onclick="startGame('2p')" style="background: linear-gradient(135deg, #10b981, #059669);">2P対戦</button>
@@ -192,27 +192,25 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-let gameState = 'menu'; // menu, playing, round_over, game_over
-let gameMode = 'cpu'; // cpu, 2p
+let gameState = 'menu';
+let gameMode = 'cpu';
 let timeLeft = 180;
 let timerInterval = null;
 
 const p1 = {
     id: 1,
-    x: 220,
-    y: 0,
+    x: 280,
     vx: 0,
     dir: 1,
     score: 0,
-    action: 'idle', // idle, advance, retreat, lunge, parry
+    action: 'idle',
     actionTimer: 0,
     cooldown: 0
 };
 
 const p2 = {
     id: 2,
-    x: 580,
-    y: 0,
+    x: 520,
     vx: 0,
     dir: -1,
     score: 0,
@@ -260,8 +258,8 @@ function startGame(mode) {
     gameMode = mode;
     p1.score = 0;
     p2.score = 0;
-    p1.x = 220;
-    p2.x = 580;
+    p1.x = 280;
+    p2.x = 520;
     document.getElementById('score1').textContent = '0';
     document.getElementById('score2').textContent = '0';
     document.getElementById('modal').classList.add('hidden');
@@ -280,8 +278,8 @@ function startGame(mode) {
 }
 
 function resetRound() {
-    p1.x = 220;
-    p2.x = 580;
+    p1.x = 280;
+    p2.x = 520;
     p1.action = 'idle';
     p2.action = 'idle';
     p1.cooldown = 0;
@@ -292,7 +290,7 @@ function resetRound() {
 function update() {
     if (gameState !== 'playing') return;
 
-    // 向きの調整 (常にお互いを向く)
+    // 格闘ゲームのように常にお互いを向くように方向を決定
     if (p1.x < p2.x) {
         p1.dir = 1;
         p2.dir = -1;
@@ -301,43 +299,43 @@ function update() {
         p2.dir = 1;
     }
 
-    // P1 操作
+    // P1 移動処理
     if (p1.actionTimer > 0) {
         p1.actionTimer--;
         if (p1.actionTimer === 0) p1.action = 'idle';
     } else {
-        if (keys['a']) { p1.x -= 3.5; p1.action = 'retreat'; }
-        else if (keys['d']) { p1.x += 3.5; p1.action = 'advance'; }
+        if (keys['a']) { p1.x -= 4.0; p1.action = 'retreat'; }
+        else if (keys['d']) { p1.x += 4.0; p1.action = 'advance'; }
         else { p1.action = 'idle'; }
     }
 
-    // P2 操作
+    // P2 移動処理
     if (gameMode === '2p') {
         if (p2.actionTimer > 0) {
             p2.actionTimer--;
             if (p2.actionTimer === 0) p2.action = 'idle';
         } else {
-            if (keys['arrowleft']) { p2.x -= 3.5; p2.action = 'retreat'; }
-            else if (keys['arrowright']) { p2.x += 3.5; p2.action = 'advance'; }
+            if (keys['arrowleft']) { p2.x -= 4.0; p2.action = 'retreat'; }
+            else if (keys['arrowright']) { p2.x += 4.0; p2.action = 'advance'; }
             else { p2.action = 'idle'; }
         }
     } else {
-        // CPU ロジック (エペらしい間合いの駆け引きとランジ)
+        // CPU ロジック（間合いを保ちながらランジを狙う）
         if (p2.actionTimer > 0) {
             p2.actionTimer--;
             if (p2.actionTimer === 0) p2.action = 'idle';
         } else {
             const dist = p1.x - p2.x; // p2から見た距離
-            if (Math.random() < 0.02) {
-                if (Math.abs(dist) < 180 && Math.random() < 0.6) {
+            if (Math.random() < 0.03) {
+                if (Math.abs(dist) < 190 && Math.random() < 0.65) {
                     triggerAction(p2, 'lunge');
-                } else if (Math.abs(dist) < 120) {
+                } else if (Math.abs(dist) < 130) {
                     triggerAction(p2, 'parry');
                 }
             }
             if (p2.actionTimer === 0) {
-                if (dist > -140) { p2.x += 2.2; p2.action = 'retreat'; }
-                else if (dist < -200) { p2.x -= 2.2; p2.action = 'advance'; }
+                if (dist > -150) { p2.x += 2.5; p2.action = 'retreat'; }
+                else if (dist < -220) { p2.x -= 2.5; p2.action = 'advance'; }
                 else { p2.action = 'idle'; }
             }
         }
@@ -347,32 +345,31 @@ function update() {
     if (p1.cooldown > 0) p1.cooldown--;
     if (p2.cooldown > 0) p2.cooldown--;
 
-    // 画面端と衝突判定（すり抜け防止）
-    const minDistance = 75;
+    // ── 【超重要】すり抜け・重なり完全防止の物理干渉（格闘ゲーム仕様） ──
+    const minDistance = 140; // 選手同士が維持すべき最小の間隔
     if (p2.x - p1.x < minDistance) {
         const mid = (p1.x + p2.x) / 2;
         p1.x = mid - minDistance / 2;
         p2.x = mid + minDistance / 2;
     }
 
-    p1.x = Math.max(60, Math.min(canvas.width - 60, p1.x));
-    p2.x = Math.max(60, Math.min(canvas.width - 60, p2.x));
+    // 画面端の制限
+    p1.x = Math.max(80, Math.min(canvas.width - 80, p1.x));
+    p2.x = Math.max(80, Math.min(canvas.width - 80, p2.x));
 
-    // 突き判定 (Hitbox for Épée - simultaneous touch allowed in Épée)
-    const hitDistance = 115;
+    // 突き判定 (Épée Rules)
+    const hitDistance = 135;
     const distanceBetween = Math.abs(p1.x - p2.x);
     
     if (distanceBetween <= hitDistance) {
         let p1Scored = p1.action === 'lunge';
         let p2Scored = p2.action === 'lunge';
 
-        // パリーによる防御判定
         if (p2.action === 'parry') p1Scored = false;
         if (p1.action === 'parry') p2Scored = false;
 
         if (p1Scored || p2Scored) {
             if (p1Scored && p2Scored) {
-                // 相打ちの場合は両者ポイント（エペのルール）
                 p1.score++;
                 p2.score++;
             } else if (p1Scored) {
@@ -446,8 +443,8 @@ function drawFencer(p) {
     ctx.quadraticCurveTo(-62, -30, -86, 12);
     ctx.stroke();
 
-    // 前脚 (ランジ時はより大きく伸ばす)
-    const lungeOffset = lunging ? 25 : 0;
+    // 前脚
+    const lungeOffset = lunging ? 30 : 0;
     ctx.strokeStyle = blue;
     ctx.lineWidth = 30;
     ctx.beginPath();
@@ -550,8 +547,8 @@ function drawFencer(p) {
     ctx.ellipse(-89, -84, 8, 6, -0.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // 剣を持つ腕 (ランジ時は前方に鋭く突き出す)
-    const armExtension = lunging ? 35 : 0;
+    // 剣を持つ腕
+    const armExtension = lunging ? 40 : 0;
     ctx.strokeStyle = blue;
     ctx.lineWidth = 23;
     ctx.beginPath();
@@ -607,7 +604,7 @@ function drawFencer(p) {
     ctx.fill();
 
     // エペのガードと剣身
-    const swordOffset = lunging ? 35 : 0;
+    const swordOffset = lunging ? 40 : 0;
     ctx.strokeStyle = "#b6c6d8";
     ctx.lineWidth = 4;
     ctx.beginPath();
@@ -619,17 +616,17 @@ function drawFencer(p) {
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(88 + swordOffset, -143);
-    ctx.lineTo(230 + swordOffset, -233);
+    ctx.lineTo(240 + swordOffset, -233);
     ctx.stroke();
 
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(90 + swordOffset, -144);
-    ctx.lineTo(230 + swordOffset, -233);
+    ctx.lineTo(240 + swordOffset, -233);
     ctx.stroke();
 
-    // ランジ時の動きのアクセント
+    // ランジ時のアクセント
     if (lunging) {
         ctx.strokeStyle = "rgba(255,255,255,.7)";
         ctx.lineWidth = 3;
@@ -645,15 +642,12 @@ function drawFencer(p) {
 }
 
 function drawPiste() {
-    // ピスト（床）の描画
     ctx.fillStyle = "#0f172a";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // メタルピストの床面
     ctx.fillStyle = "#1e293b";
     ctx.fillRect(40, 240, canvas.width - 80, 100);
 
-    // ピストのグリッド・ライン
     ctx.strokeStyle = "#334155";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -661,7 +655,6 @@ function drawPiste() {
     ctx.lineTo(canvas.width - 40, 292);
     ctx.stroke();
 
-    // センターラインと警告線
     ctx.strokeStyle = "#ef4444";
     ctx.lineWidth = 2;
     ctx.beginPath();

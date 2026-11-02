@@ -167,7 +167,7 @@
         <!-- モーダル -->
         <div id="modal" class="modal">
             <h2 id="modalTitle">FENCING ELITE</h2>
-            <p id="modalDesc">本格エペ競技シミュレーション。格闘ゲームのような間合いの駆け引きで勝利をつかめ！</p>
+            <p id="modalDesc">格闘ゲームのような緊迫した間合いの駆け引きで、エペの頂点を目指せ！</p>
             <div style="display: flex; gap: 12px;">
                 <button class="menu-btn" onclick="startGame('cpu')">1P vs CPU</button>
                 <button class="menu-btn" onclick="startGame('2p')" style="background: linear-gradient(135deg, #10b981, #059669);">2P対戦</button>
@@ -199,23 +199,23 @@ let timerInterval = null;
 
 const p1 = {
     id: 1,
-    x: 280,
-    vx: 0,
+    x: 260,
     dir: 1,
     score: 0,
     action: 'idle',
     actionTimer: 0,
+    tagTimer: 0,
     cooldown: 0
 };
 
 const p2 = {
     id: 2,
-    x: 520,
-    vx: 0,
+    x: 540,
     dir: -1,
     score: 0,
     action: 'idle',
     actionTimer: 0,
+    tagTimer: 0,
     cooldown: 0
 };
 
@@ -258,8 +258,8 @@ function startGame(mode) {
     gameMode = mode;
     p1.score = 0;
     p2.score = 0;
-    p1.x = 280;
-    p2.x = 520;
+    p1.x = 260;
+    p2.x = 540;
     document.getElementById('score1').textContent = '0';
     document.getElementById('score2').textContent = '0';
     document.getElementById('modal').classList.add('hidden');
@@ -278,8 +278,8 @@ function startGame(mode) {
 }
 
 function resetRound() {
-    p1.x = 280;
-    p2.x = 520;
+    p1.x = 260;
+    p2.x = 540;
     p1.action = 'idle';
     p2.action = 'idle';
     p1.cooldown = 0;
@@ -290,7 +290,7 @@ function resetRound() {
 function update() {
     if (gameState !== 'playing') return;
 
-    // 格闘ゲームのように常にお互いを向くように方向を決定
+    // 格闘ゲームのように常にお互いを向く
     if (p1.x < p2.x) {
         p1.dir = 1;
         p2.dir = -1;
@@ -299,7 +299,7 @@ function update() {
         p2.dir = 1;
     }
 
-    // P1 移動処理
+    // P1 移動
     if (p1.actionTimer > 0) {
         p1.actionTimer--;
         if (p1.actionTimer === 0) p1.action = 'idle';
@@ -309,7 +309,7 @@ function update() {
         else { p1.action = 'idle'; }
     }
 
-    // P2 移動処理
+    // P2 移動
     if (gameMode === '2p') {
         if (p2.actionTimer > 0) {
             p2.actionTimer--;
@@ -320,45 +320,43 @@ function update() {
             else { p2.action = 'idle'; }
         }
     } else {
-        // CPU ロジック（間合いを保ちながらランジを狙う）
+        // CPUロジック
         if (p2.actionTimer > 0) {
             p2.actionTimer--;
             if (p2.actionTimer === 0) p2.action = 'idle';
         } else {
-            const dist = p1.x - p2.x; // p2から見た距離
+            const dist = p1.x - p2.x;
             if (Math.random() < 0.03) {
-                if (Math.abs(dist) < 190 && Math.random() < 0.65) {
+                if (Math.abs(dist) < 210 && Math.random() < 0.65) {
                     triggerAction(p2, 'lunge');
-                } else if (Math.abs(dist) < 130) {
+                } else if (Math.abs(dist) < 150) {
                     triggerAction(p2, 'parry');
                 }
             }
             if (p2.actionTimer === 0) {
-                if (dist > -150) { p2.x += 2.5; p2.action = 'retreat'; }
-                else if (dist < -220) { p2.x -= 2.5; p2.action = 'advance'; }
+                if (dist > -170) { p2.x += 2.5; p2.action = 'retreat'; }
+                else if (dist < -240) { p2.x -= 2.5; p2.action = 'advance'; }
                 else { p2.action = 'idle'; }
             }
         }
     }
 
-    // クールダウン減少
     if (p1.cooldown > 0) p1.cooldown--;
     if (p2.cooldown > 0) p2.cooldown--;
 
-    // ── 【超重要】すり抜け・重なり完全防止の物理干渉（格闘ゲーム仕様） ──
-    const minDistance = 140; // 選手同士が維持すべき最小の間隔
+    // ── 格闘ゲーム仕様：キャラクター同士の重なり・すり抜け完全防止 ──
+    const minDistance = 210;
     if (p2.x - p1.x < minDistance) {
         const mid = (p1.x + p2.x) / 2;
         p1.x = mid - minDistance / 2;
         p2.x = mid + minDistance / 2;
     }
 
-    // 画面端の制限
-    p1.x = Math.max(80, Math.min(canvas.width - 80, p1.x));
-    p2.x = Math.max(80, Math.min(canvas.width - 80, p2.x));
+    p1.x = Math.max(90, Math.min(canvas.width - 90, p1.x));
+    p2.x = Math.max(90, Math.min(canvas.width - 90, p2.x));
 
     // 突き判定 (Épée Rules)
-    const hitDistance = 135;
+    const hitDistance = 160;
     const distanceBetween = Math.abs(p1.x - p2.x);
     
     if (distanceBetween <= hitDistance) {
@@ -404,6 +402,7 @@ function drawFencer(p) {
     const red = p.id === 2;
     const base = 292;
     const lunging = p.action === "lunge";
+    const parrying = p.action === "parry";
 
     const suit = "#f8f9fc";
     const shade = "#c6d7eb";
@@ -415,226 +414,229 @@ function drawFencer(p) {
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
-    // 地面の影
-    ctx.fillStyle = "rgba(22,24,70,.4)";
+    // 地面の影 (重厚な格闘ゲーム風シャドウ)
+    ctx.fillStyle = "rgba(15,23,42,.6)";
     ctx.beginPath();
-    ctx.ellipse(0, 48, 112, 7, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 48, 115, 9, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 後ろ脚
-    ctx.strokeStyle = blue;
-    ctx.lineWidth = 28;
-    ctx.beginPath();
-    ctx.moveTo(-8, -45);
-    ctx.quadraticCurveTo(-61, -36, -88, 16);
-    ctx.stroke();
-
-    ctx.strokeStyle = suit;
-    ctx.lineWidth = 20;
-    ctx.beginPath();
-    ctx.moveTo(-8, -46);
-    ctx.quadraticCurveTo(-61, -36, -88, 16);
-    ctx.stroke();
-
-    ctx.strokeStyle = shade;
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.moveTo(-15, -43);
-    ctx.quadraticCurveTo(-62, -30, -86, 12);
-    ctx.stroke();
-
-    // 前脚
-    const lungeOffset = lunging ? 30 : 0;
+    // ── 【格闘ゲーム風 改良版選手デザイン】 ──
+    // 1. 後ろ脚（タメを利かせた筋肉質なレッグライン）
     ctx.strokeStyle = blue;
     ctx.lineWidth = 30;
     ctx.beginPath();
-    ctx.moveTo(8, -43);
-    ctx.quadraticCurveTo(48 + lungeOffset/2, -20, 67 + lungeOffset, 1);
-    ctx.quadraticCurveTo(92 + lungeOffset, 22, 119 + lungeOffset, 23);
+    ctx.moveTo(-10, -45);
+    ctx.quadraticCurveTo(-65, -35, -92, 16);
     ctx.stroke();
 
     ctx.strokeStyle = suit;
-    ctx.lineWidth = 21;
-    ctx.beginPath();
-    ctx.moveTo(8, -44);
-    ctx.quadraticCurveTo(48 + lungeOffset/2, -21, 67 + lungeOffset, 0);
-    ctx.quadraticCurveTo(92 + lungeOffset, 21, 119 + lungeOffset, 22);
-    ctx.stroke();
-
-    ctx.strokeStyle = shade;
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.moveTo(15, -41);
-    ctx.quadraticCurveTo(49 + lungeOffset/2, -18, 66 + lungeOffset, 1);
-    ctx.stroke();
-
-    // シューズ
-    ctx.fillStyle = "#234b91";
-    ctx.beginPath();
-    ctx.moveTo(-105, 23);
-    ctx.quadraticCurveTo(-91, 13, -77, 15);
-    ctx.lineTo(-68, 26);
-    ctx.lineTo(-99, 33);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(108 + lungeOffset, 18);
-    ctx.quadraticCurveTo(128 + lungeOffset, 14, 143 + lungeOffset, 25);
-    ctx.lineTo(143 + lungeOffset, 31);
-    ctx.lineTo(112 + lungeOffset, 31);
-    ctx.closePath();
-    ctx.fill();
-
-    // 胴体・ジャケット
-    ctx.fillStyle = blue;
-    ctx.beginPath();
-    ctx.moveTo(-21, -122);
-    ctx.quadraticCurveTo(8, -137, 36, -108);
-    ctx.lineTo(27, -53);
-    ctx.quadraticCurveTo(8, -34, -18, -49);
-    ctx.lineTo(-37, -82);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = suit;
-    ctx.beginPath();
-    ctx.moveTo(-22, -126);
-    ctx.quadraticCurveTo(8, -139, 32, -110);
-    ctx.lineTo(23, -56);
-    ctx.quadraticCurveTo(7, -38, -15, -52);
-    ctx.lineTo(-32, -84);
-    ctx.closePath();
-    ctx.fill();
-
-    // ジャケットの陰影
-    ctx.strokeStyle = shade;
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.moveTo(-15, -116);
-    ctx.quadraticCurveTo(0, -97, 15, -90);
-    ctx.moveTo(18, -80);
-    ctx.quadraticCurveTo(2, -66, -12, -63);
-    ctx.stroke();
-
-    // 腰ベルト
-    ctx.strokeStyle = "#244d8e";
-    ctx.lineWidth = 7;
-    ctx.beginPath();
-    ctx.moveTo(-20, -54);
-    ctx.quadraticCurveTo(2, -47, 25, -55);
-    ctx.stroke();
-
-    // 後方に伸ばす腕
-    ctx.strokeStyle = blue;
     ctx.lineWidth = 22;
     ctx.beginPath();
-    ctx.moveTo(-15, -111);
-    ctx.quadraticCurveTo(-44, -94, -58, -73);
-    ctx.quadraticCurveTo(-76, -65, -87, -82);
+    ctx.moveTo(-10, -46);
+    ctx.quadraticCurveTo(-65, -35, -92, 16);
+    ctx.stroke();
+
+    ctx.strokeStyle = shade;
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(-16, -43);
+    ctx.quadraticCurveTo(-66, -29, -90, 12);
+    ctx.stroke();
+
+    // 2. 前脚（ランジ時はより鋭くダイナミックに突進）
+    const lungeOffset = lunging ? 45 : 0;
+    ctx.strokeStyle = blue;
+    ctx.lineWidth = 32;
+    ctx.beginPath();
+    ctx.moveTo(10, -43);
+    ctx.quadraticCurveTo(50 + lungeOffset/2, -20, 70 + lungeOffset, 1);
+    ctx.quadraticCurveTo(96 + lungeOffset, 22, 125 + lungeOffset, 23);
     ctx.stroke();
 
     ctx.strokeStyle = suit;
-    ctx.lineWidth = 15;
-    ctx.beginPath();
-    ctx.moveTo(-15, -111);
-    ctx.quadraticCurveTo(-44, -94, -58, -73);
-    ctx.quadraticCurveTo(-76, -65, -87, -82);
-    ctx.stroke();
-
-    ctx.fillStyle = "#e9b99b";
-    ctx.beginPath();
-    ctx.ellipse(-89, -84, 8, 6, -0.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 剣を持つ腕
-    const armExtension = lunging ? 40 : 0;
-    ctx.strokeStyle = blue;
     ctx.lineWidth = 23;
     ctx.beginPath();
-    ctx.moveTo(22, -111);
-    ctx.quadraticCurveTo(50 + armExtension/2, -120, 73 + armExtension, -135);
+    ctx.moveTo(10, -44);
+    ctx.quadraticCurveTo(50 + lungeOffset/2, -21, 70 + lungeOffset, 0);
+    ctx.quadraticCurveTo(96 + lungeOffset, 21, 125 + lungeOffset, 22);
     ctx.stroke();
 
-    ctx.strokeStyle = suit;
-    ctx.lineWidth = 16;
+    ctx.strokeStyle = shade;
+    ctx.lineWidth = 6;
     ctx.beginPath();
-    ctx.moveTo(22, -111);
-    ctx.quadraticCurveTo(50 + armExtension/2, -120, 73 + armExtension, -135);
+    ctx.moveTo(16, -41);
+    ctx.quadraticCurveTo(51 + lungeOffset/2, -18, 68 + lungeOffset, 1);
     ctx.stroke();
 
-    ctx.fillStyle = "#e9b99b";
+    // 3. 青色のフェンシングシューズ
+    ctx.fillStyle = "#1d4ed8";
     ctx.beginPath();
-    ctx.ellipse(79 + armExtension, -137, 9, 6, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-
-    // マスク
-    ctx.fillStyle = "#e8b99b";
-    ctx.fillRect(-1, -140, 17, 17);
-
-    ctx.fillStyle = red ? "#e34e5a" : "#35b96d";
-    ctx.beginPath();
-    ctx.ellipse(-1, -158, 20, 29, -0.08, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = red ? "#a92f48" : "#187f4d";
-    ctx.beginPath();
-    ctx.ellipse(4, -158, 14, 24, -0.08, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = "#dcecff";
-    ctx.beginPath();
-    ctx.ellipse(7, -161, 10, 19, -0.08, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.ellipse(7, -161, 10, 19, -0.08, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // マスクの首部分
-    ctx.fillStyle = suit;
-    ctx.beginPath();
-    ctx.moveTo(-10, -139);
-    ctx.lineTo(12, -139);
-    ctx.lineTo(19, -124);
-    ctx.lineTo(-7, -124);
+    ctx.moveTo(-110, 23);
+    ctx.quadraticCurveTo(-94, 12, -78, 15);
+    ctx.lineTo(-68, 26);
+    ctx.lineTo(-102, 34);
     ctx.closePath();
     ctx.fill();
 
-    // エペのガードと剣身
-    const swordOffset = lunging ? 40 : 0;
-    ctx.strokeStyle = "#b6c6d8";
-    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(80 + swordOffset, -136);
-    ctx.lineTo(91 + swordOffset, -145);
+    ctx.moveTo(112 + lungeOffset, 18);
+    ctx.quadraticCurveTo(134 + lungeOffset, 13, 150 + lungeOffset, 25);
+    ctx.lineTo(150 + lungeOffset, 32);
+    ctx.lineTo(116 + lungeOffset, 32);
+    ctx.closePath();
+    ctx.fill();
+
+    // 4. 胴体・立体的なフェンシングジャケット（格闘ゲームのようなエッジと光沢）
+    ctx.fillStyle = blue;
+    ctx.beginPath();
+    ctx.moveTo(-24, -125);
+    ctx.quadraticCurveTo(8, -142, 40, -110);
+    ctx.lineTo(30, -52);
+    ctx.quadraticCurveTo(8, -32, -20, -48);
+    ctx.lineTo(-40, -84);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = suit;
+    ctx.beginPath();
+    ctx.moveTo(-25, -129);
+    ctx.quadraticCurveTo(8, -145, 36, -112);
+    ctx.lineTo(26, -55);
+    ctx.quadraticCurveTo(7, -36, -17, -51);
+    ctx.lineTo(-35, -86);
+    ctx.closePath();
+    ctx.fill();
+
+    // ジャケットの立体グラデーション陰影
+    ctx.strokeStyle = shade;
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(-16, -118);
+    ctx.quadraticCurveTo(2, -98, 18, -90);
+    ctx.moveTo(20, -78);
+    ctx.quadraticCurveTo(2, -64, -14, -60);
     ctx.stroke();
 
-    ctx.strokeStyle = "#e6eff9";
-    ctx.lineWidth = 2;
+    // 重厚な腰ベルト
+    ctx.strokeStyle = "#1e3a8a";
+    ctx.lineWidth = 8;
     ctx.beginPath();
-    ctx.moveTo(88 + swordOffset, -143);
-    ctx.lineTo(240 + swordOffset, -233);
+    ctx.moveTo(-22, -53);
+    ctx.quadraticCurveTo(2, -45, 28, -54);
     ctx.stroke();
 
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 1;
+    // 5. 後方に伸ばす腕（バランスを取るポージング）
+    ctx.strokeStyle = blue;
+    ctx.lineWidth = 24;
     ctx.beginPath();
-    ctx.moveTo(90 + swordOffset, -144);
-    ctx.lineTo(240 + swordOffset, -233);
+    ctx.moveTo(-16, -112);
+    ctx.quadraticCurveTo(-48, -95, -62, -72);
+    ctx.quadraticCurveTo(-82, -64, -94, -82);
     ctx.stroke();
 
-    // ランジ時のアクセント
+    ctx.strokeStyle = suit;
+    ctx.lineWidth = 17;
+    ctx.beginPath();
+    ctx.moveTo(-16, -112);
+    ctx.quadraticCurveTo(-48, -95, -62, -72);
+    ctx.quadraticCurveTo(-82, -64, -94, -82);
+    ctx.stroke();
+
+    ctx.fillStyle = "#f5d0b1";
+    ctx.beginPath();
+    ctx.ellipse(-96, -84, 9, 7, -0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 6. 剣を持つ腕（ランジ時は鋭く前方に突き出し、パリー時は少し引き締める）
+    const parryOffset = parrying ? -15 : 0;
+    const armExtension = lunging ? 50 : (parrying ? -10 : 0);
+    ctx.strokeStyle = blue;
+    ctx.lineWidth = 25;
+    ctx.beginPath();
+    ctx.moveTo(24, -112);
+    ctx.quadraticCurveTo(54 + armExtension/2, -122 + parryOffset, 78 + armExtension + parryOffset, -136);
+    ctx.stroke();
+
+    ctx.strokeStyle = suit;
+    ctx.lineWidth = 18;
+    ctx.beginPath();
+    ctx.moveTo(24, -112);
+    ctx.quadraticCurveTo(54 + armExtension/2, -122 + parryOffset, 78 + armExtension + parryOffset, -136);
+    ctx.stroke();
+
+    ctx.fillStyle = "#f5d0b1";
+    ctx.beginPath();
+    ctx.ellipse(85 + armExtension + parryOffset, -138, 10, 7, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 7. マスク（緑と赤の色分け、金属的な明るいフロント光沢）
+    ctx.fillStyle = "#f5d0b1";
+    ctx.fillRect(-1, -142, 18, 18);
+
+    ctx.fillStyle = red ? "#ef4444" : "#10b981";
+    ctx.beginPath();
+    ctx.ellipse(-1, -160, 22, 31, -0.08, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = red ? "#991b1b" : "#047857";
+    ctx.beginPath();
+    ctx.ellipse(4, -160, 15, 26, -0.08, 0, Math.PI * 2);
+    ctx.fill();
+
+    // メッシュの明るい金属光沢
+    ctx.fillStyle = "#e0f2fe";
+    ctx.beginPath();
+    ctx.ellipse(8, -163, 11, 20, -0.08, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.ellipse(8, -163, 11, 20, -0.08, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // マスクの首元プロテクター
+    ctx.fillStyle = suit;
+    ctx.beginPath();
+    ctx.moveTo(-11, -140);
+    ctx.lineTo(13, -140);
+    ctx.lineTo(21, -124);
+    ctx.lineTo(-8, -124);
+    ctx.closePath();
+    ctx.fill();
+
+    // 8. エペのガードと細く長い剣身
+    const swordOffset = armExtension + parryOffset;
+    ctx.strokeStyle = "#cbd5e1";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(85 + swordOffset, -137);
+    ctx.lineTo(98 + swordOffset, -148);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#f8fafc";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(94 + swordOffset, -145);
+    ctx.lineTo(270 + swordOffset, -235);
+    ctx.stroke();
+
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(96 + swordOffset, -146);
+    ctx.lineTo(270 + swordOffset, -235);
+    ctx.stroke();
+
+    // ランジ時のスピードアクセント線
     if (lunging) {
-        ctx.strokeStyle = "rgba(255,255,255,.7)";
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = "rgba(255,255,255,.8)";
+        ctx.lineWidth = 3.5;
         ctx.beginPath();
-        ctx.moveTo(-130, -5);
-        ctx.lineTo(-151, -5);
-        ctx.moveTo(-124, 8);
-        ctx.lineTo(-143, 14);
+        ctx.moveTo(-140, -5);
+        ctx.lineTo(-165, -5);
+        ctx.moveTo(-132, 8);
+        ctx.lineTo(-155, 15);
         ctx.stroke();
     }
 
